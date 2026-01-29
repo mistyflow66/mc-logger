@@ -22,22 +22,8 @@
     .score-table th { background: #795548; }
     .hidden { display: none !important; }
     #chestGallery { display: flex; flex-wrap: wrap; gap: 5px; background: #1e1e1e; padding: 10px; margin-top: 5px; border-radius: 5px; }
-    .stamp-card { 
-      display: flex; 
-      justify-content: space-between; /* 讓兩個項目各據左右 */
-      align-items: center;            /* 確保垂直中心對齊 */
-      background: #000; 
-      padding: 10px 15px;             /* 增加左右內距 */
-      margin-top: 10px; 
-      border: 2px solid #555; 
-    }
-    .stamp-item { 
-      font-size: 14px; 
-      color: #ffeb3b; 
-      flex: 1;                        /* 讓兩個項目平分空間 */
-      text-align: center;             /* 文字置中 */
-      white-space: nowrap;            /* 強制文字不換行 */
-    }
+    .stamp-card { display: flex; justify-content: space-between; align-items: center; background: #000; padding: 10px 15px; margin-top: 10px; border: 2px solid #555; }
+    .stamp-item { font-size: 14px; color: #ffeb3b; flex: 1; text-align: center; white-space: nowrap; }
   </style>
 </head>
 <body>
@@ -48,7 +34,6 @@
     <div class="dashboard">
       <div style="color:#fff; font-size:14px;">🔋 目前 3C 能量</div>
       <div class="balance-value" id="balanceDisplay">0</div>
-      
       <div class="stamp-card">
         <div class="stamp-item">⭐ 自己起床: <span id="wakeupCount">0</span>/10</div>
         <div class="stamp-item">❤️ GOOD: <span id="goodCount">0</span>/10</div>
@@ -104,8 +89,8 @@
         <tbody>
           <tr><td>跳繩</td><td>100 下</td><td>+ 5</td></tr>
           <tr><td>跑步</td><td>200 公尺</td><td>+ 5</td></tr>
-          <tr><td>仰臥起坐</td><td>1 次</td><td>+ 5</td></tr>
-          <tr style="color: #ffeb3b; background: #333;"><td>⏰ 自己起床</td><td>滿 10 次</td><td>+ 5 (額外獎勵)</td></tr>
+          <tr><td>仰臥起坐</td><td>1 分鐘</td><td>+ 5</td></tr>
+          <tr style="color: #ffeb3b; background: #333;"><td>⭐ 自己起床</td><td>滿 10 次</td><td>+ 5 (額外獎勵)</td></tr>
           <tr style="color: #ffeb3b; background: #333;"><td>❤️ GOOD</td><td>滿 10 次</td><td>+ 10 (額外獎勵)</td></tr>
         </tbody>
       </table>
@@ -114,7 +99,7 @@
 
   <script>
     const gasUrl = "https://script.google.com/macros/s/AKfycby8MaeORmgHynbc4qTnjUUCyn12NWZYJP6HEhCZ1wEsXOX3fnTlQT-LP9l8FRNQf4cG/exec"; 
-    const openingDate = new Date("2026-02-23"); // 開學日期
+    const openingDate = new Date("2026-02-23");
     const optionsMap = {
       "卉": { "運動": ["跳繩", "跑步", "仰臥起坐"], "3C": ["看電視", "用手機", "玩電腦"], "規劃": ["閱讀", "做小書", "練習英文", "其他"] },
       "姐": { "運動": ["跳繩", "跑步", "仰臥起坐"], "3C": ["看電視", "用手機", "玩電腦"], "獎勵": ["自己起床", "GOOD", "加分", "扣分"] }
@@ -160,9 +145,25 @@
       }
     }
 
+    // 補回 refreshData 函數
+    function refreshData() {
+      fetch(`${gasUrl}?action=readData`)
+        .then(res => res.json())
+        .then(data => {
+          document.getElementById('balanceDisplay').innerText = data.total3C || 0;
+          document.getElementById('todayList').innerHTML = (data.todayLogs && data.todayLogs.length > 0) ? data.todayLogs.join("<br>") : "今天還沒有紀錄";
+          document.getElementById('wakeupCount').innerText = data.wakeup || 0;
+          document.getElementById('goodCount').innerText = data.good || 0;
+          document.getElementById('noteList').innerHTML = (data.notes && data.notes.length > 0) ? data.notes.join("<br>") : "目前沒有留言";
+          const gallery = document.getElementById('chestGallery');
+          gallery.innerHTML = data.myChest.map(url => `<img src="${url}" style="width:50px;height:50px;object-fit:cover;">`).join("");
+        })
+        .catch(err => console.error("抓取資料失敗:", err));
+    }
+
     function submitForm() {
       const user = document.querySelector('input[name="user"]:checked').value;
-      const submitBtn = document.querySelector('button[onclick="submitForm()"]'); // 抓取按鈕
+      const submitBtn = document.querySelector('button[onclick="submitForm()"]');
 
       if (user === '姐' && document.getElementById('passwordInput').value !== "3672") {
         alert("密碼錯誤！"); return;
@@ -175,19 +176,15 @@
 
       const isTextMode = (type === "規劃" || item === "其他");
       if (!valRaw) {
-        alert(isTextMode ? "請輸入『做了什麼』！" : "請輸入『數量數字』！");
-        return;
+        alert(isTextMode ? "請輸入『做了什麼』！" : "請輸入『數量數字』！"); return;
       }
       if (!isTextMode && isNaN(valRaw)) {
-        alert("這項請輸入『數字』，不要輸入文字！");
-        return;
+        alert("這項請輸入『數字』，不要輸入文字！"); return;
       }
 
-      // --- 開始「載入中」狀態 ---
       submitBtn.disabled = true;
-      submitBtn.innerText = "⏳ 傳送中，請稍候...";
-      submitBtn.style.background = "#95a5a6"; // 變成灰色
-      submitBtn.style.boxShadow = "none";
+      submitBtn.innerText = "⏳ 傳送中...";
+      submitBtn.style.background = "#95a5a6";
 
       const finalVal = isTextMode ? 0 : valRaw;
       const otherNote = isTextMode ? valRaw : "";
@@ -206,18 +203,13 @@
             location.reload();
           }
         })
-        .catch(err => {
-          alert("連線超時或出錯，請再試一次！");
-          console.error(err);
-        })
         .finally(() => {
-          // --- 結束「載入中」狀態（如果沒有重新整理頁面的話） ---
           submitBtn.disabled = false;
           submitBtn.innerText = "💾 存檔紀錄";
           submitBtn.style.background = "var(--mc-green)";
-          submitBtn.style.boxShadow = "0 4px #1b5e20";
         });
     }
+
     function toggleChest() { document.getElementById('chestGallery').classList.toggle('hidden'); }
     
     window.onload = () => { 
@@ -229,5 +221,3 @@
   </script>
 </body>
 </html>
-
-

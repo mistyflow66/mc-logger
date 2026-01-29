@@ -21,7 +21,14 @@
     .score-table td, .score-table th { border: 1px solid #555; padding: 6px; text-align: center; }
     .score-table th { background: #795548; }
     .hidden { display: none !important; }
-    #chestGallery { display: flex; flex-wrap: wrap; gap: 5px; background: #1e1e1e; padding: 10px; margin-top: 5px; border-radius: 5px; }
+    
+    /* 寶箱樣式優化 */
+    #chestGallery { display: flex; flex-wrap: wrap; gap: 8px; background: #1e1e1e; padding: 10px; margin-top: 5px; border-radius: 5px; justify-content: center; }
+    .chest-img { width: 65px; height: 65px; object-fit: cover; border: 2px solid #555; border-radius: 4px; }
+    .pagination { display: flex; justify-content: center; align-items: center; gap: 15px; margin-top: 8px; font-size: 14px; }
+    .page-btn { background: #555; color: white; border: none; padding: 5px 10px; cursor: pointer; border-radius: 3px; }
+    .page-btn:disabled { background: #222; color: #555; cursor: not-allowed; }
+
     .stamp-card { display: flex; justify-content: space-between; align-items: center; background: #000; padding: 10px 15px; margin-top: 10px; border: 2px solid #555; }
     .stamp-item { font-size: 14px; color: #ffeb3b; flex: 1; text-align: center; white-space: nowrap; }
   </style>
@@ -63,6 +70,11 @@
     <div id="chestSection" style="margin-top:10px; text-align:left;">
       <div style="cursor:pointer; color:#55efc4; font-size:14px;" onclick="toggleChest()">📦 我的寶箱 (點開相簿)</div>
       <div id="chestGallery" class="hidden"></div>
+      <div id="paginationControls" class="pagination hidden">
+        <button id="prevPage" class="page-btn" onclick="changePage(-1)">◀ 上一頁</button>
+        <span id="pageInfo">1 / 1</span>
+        <button id="nextPage" class="page-btn" onclick="changePage(1)">下一頁 ▶</button>
+      </div>
     </div>
 
     <div id="giftArea" class="hidden" style="margin-top:20px; background:#000; border:3px dashed #ffeb3b; padding:10px;">
@@ -105,15 +117,12 @@
       "姐": { "運動": ["跳繩", "跑步", "仰臥起坐"], "3C": ["看電視", "用手機", "玩電腦"], "獎勵": ["自己起床", "GOOD", "加分", "扣分"] }
     };
 
-    const randomPlaceholders = [
-      "寫點悄悄話...",
-      "還在ㄊㄟ",
-      "現在的心情...",
-      "(⁠・⁠∀⁠・⁠)",
-      "(⁠ㆁ⁠ω⁠ㆁ⁠)",
-      "(⁠◍⁠•⁠ᴗ⁠•⁠◍⁠)",
-      "今天運動了嗎？"
-    ];
+    const randomPlaceholders = ["寫點悄悄話...", "還在ㄊㄟ", "現在的心情...", "(⁠・⁠∀⁠・⁠)", "(⁠ㆁ⁠ω⁠ㆁ⁠)", "(⁠◍⁠•⁠ᴗ⁠•⁠◍⁠)", "今天運動了嗎？"];
+    
+    // 全域變數存儲相簿資料
+    let allChestImages = [];
+    let currentPage = 1;
+    const itemsPerPage = 10;
 
     function setRandomPlaceholder() {
       const randomIndex = Math.floor(Math.random() * randomPlaceholders.length);
@@ -169,27 +178,61 @@
           document.getElementById('wakeupCount').innerText = data.wakeup || 0;
           document.getElementById('goodCount').innerText = data.good || 0;
           document.getElementById('noteList').innerHTML = (data.notes && data.notes.length > 0) ? data.notes.join("<br>") : "目前沒有留言";
-          const gallery = document.getElementById('chestGallery');
-          gallery.innerHTML = data.myChest.map(url => `<img src="${url}" style="width:50px;height:50px;object-fit:cover;">`).join("");
+          
+          // 儲存並渲染寶箱
+          allChestImages = data.myChest || [];
+          renderChest();
         })
         .catch(err => console.error("抓取資料失敗:", err));
+    }
+
+    // 分頁渲染邏輯
+    function renderChest() {
+      const gallery = document.getElementById('chestGallery');
+      const controls = document.getElementById('paginationControls');
+      
+      if (allChestImages.length === 0) {
+        gallery.innerHTML = "<div style='color:#777;font-size:12px;'>寶箱還是空的...</div>";
+        controls.classList.add('hidden');
+        return;
+      }
+
+      const totalPages = Math.ceil(allChestImages.length / itemsPerPage);
+      if (currentPage > totalPages) currentPage = totalPages;
+
+      // 切割當前頁面的圖片
+      const startIndex = (currentPage - 1) * itemsPerPage;
+      const pageImages = allChestImages.slice(startIndex, startIndex + itemsPerPage);
+
+      gallery.innerHTML = pageImages.map(url => `<img src="${url}" class="chest-img">`).join("");
+
+      // 只有多於 10 張才顯示分頁按鈕
+      if (allChestImages.length > itemsPerPage) {
+        controls.classList.remove('hidden');
+        document.getElementById('pageInfo').innerText = `${currentPage} / ${totalPages}`;
+        document.getElementById('prevPage').disabled = (currentPage === 1);
+        document.getElementById('nextPage').disabled = (currentPage === totalPages);
+      } else {
+        controls.classList.add('hidden');
+      }
+    }
+
+    function changePage(offset) {
+      currentPage += offset;
+      renderChest();
     }
 
     function submitForm() {
       const user = document.querySelector('input[name="user"]:checked').value;
       const submitBtn = document.querySelector('button[onclick="submitForm()"]');
-
       if (user === '姐' && document.getElementById('passwordInput').value !== "3672") {
         alert("密碼錯誤！"); return;
       }
-      
       const type = document.getElementById('typeSelect').value;
       const item = document.getElementById('itemSelect').value;
       const valRaw = document.getElementById('valueInput').value.trim();
       const note = document.getElementById('noteInput').value.trim(); 
-      
       if (!type || !item) { alert("請選擇類別和項目！"); return; }
-
       const isTextMode = (type === "規劃" || item === "其他");
       if (!valRaw) {
         alert(isTextMode ? "請輸入『做了什麼』！" : "請輸入『數量數字』！"); return;
@@ -197,36 +240,27 @@
       if (!isTextMode && isNaN(valRaw)) {
         alert("這項請輸入『數字』，不要輸入文字！"); return;
       }
-
       submitBtn.disabled = true;
       submitBtn.innerText = "⏳ 傳送中...";
       submitBtn.style.background = "#95a5a6";
-
       const finalVal = isTextMode ? 0 : valRaw;
       const otherNote = isTextMode ? valRaw : "";
       const url = `${gasUrl}?action=addData&user=${user}&category=${type}&item=${item}&value=${finalVal}&otherNote=${encodeURIComponent(otherNote)}&note=${encodeURIComponent(note)}`;
-      
-      fetch(url)
-        .then(res => res.text())
-        .then(giftUrl => {
-          if (user === "卉" && giftUrl && !["Error", "Success"].includes(giftUrl)) {
-            document.getElementById('giftArea').classList.remove('hidden');
-            document.getElementById('luckyGif').src = giftUrl;
-            alert("發現掉落物！");
-          } else {
-            alert("存檔成功！");
-          }
-          clearFormAfterSubmit();
-          refreshData();
-        })
-        .catch(err => {
-          alert("發生錯誤，請檢查網路！");
-        })
-        .finally(() => {
-          submitBtn.disabled = false;
-          submitBtn.innerText = "💾 存檔紀錄";
-          submitBtn.style.background = "var(--mc-green)";
-        });
+      fetch(url).then(res => res.text()).then(giftUrl => {
+        if (user === "卉" && giftUrl && !["Error", "Success"].includes(giftUrl)) {
+          document.getElementById('giftArea').classList.remove('hidden');
+          document.getElementById('luckyGif').src = giftUrl;
+          alert("發現掉落物！");
+        } else {
+          alert("存檔成功！");
+        }
+        clearFormAfterSubmit();
+        refreshData();
+      }).finally(() => {
+        submitBtn.disabled = false;
+        submitBtn.innerText = "💾 存檔紀錄";
+        submitBtn.style.background = "var(--mc-green)";
+      });
     }
 
     function clearFormAfterSubmit() {
@@ -237,7 +271,19 @@
       setRandomPlaceholder(); 
     }
 
-    function toggleChest() { document.getElementById('chestGallery').classList.toggle('hidden'); }
+    function toggleChest() {
+      const gallery = document.getElementById('chestGallery');
+      const controls = document.getElementById('paginationControls');
+      const isHidden = gallery.classList.contains('hidden');
+      
+      gallery.classList.toggle('hidden');
+      // 如果打開寶箱，且圖片大於10張，才顯示分頁按鈕
+      if (!isHidden && allChestImages.length > itemsPerPage) {
+        controls.classList.remove('hidden');
+      } else {
+        controls.classList.add('hidden');
+      }
+    }
     
     window.onload = () => { 
       switchUser('卉'); 

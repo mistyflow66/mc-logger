@@ -27,7 +27,7 @@
 <body>
   <div class="container">
     <h2>💎 冒險儀表板</h2>
-    <div id="timer">載入中...</div>
+    <div id="timer" style="font-size: 12px; color: #aaa; margin-bottom: 10px;">載入中...</div>
 
     <div class="dashboard">
       <div style="color:#fff; font-size:14px;">🔋 目前 3C 能量</div>
@@ -69,6 +69,11 @@
       <div id="todayList" style="color:#8bc34a; font-size: 14px;"></div>
     </div>
 
+    <div class="daily-log" style="border-color: #fab1a0;">
+      <div class="log-title" style="color: #ff7675;">📢 悄悄話留言板</div>
+      <div id="noteList" style="font-size: 13px; color: #dfe6e9;"></div>
+    </div>
+
     <div class="daily-log">
       <div class="log-title">🕰️ 最近 10 筆紀錄</div>
       <div id="historyList" style="font-size: 12px; color: #bbb;"></div>
@@ -91,10 +96,20 @@
 
   <script>
     const gasUrl = "https://script.google.com/macros/s/AKfycby8MaeORmgHynbc4qTnjUUCyn12NWZYJP6HEhCZ1wEsXOX3fnTlQT-LP9l8FRNQf4cG/exec"; 
+    const openingDate = new Date("2026-02-23"); // 開學日期
     const optionsMap = {
       "卉": { "運動": ["跳繩", "跑步", "仰臥起坐"], "3C": ["看電視", "用手機", "玩電腦"], "規劃": ["閱讀", "做小書", "練習英文", "其他"] },
       "姐": { "運動": ["跳繩", "跑步", "仰臥起坐"], "3C": ["看電視", "用手機", "玩電腦"], "獎勵": ["自己起床", "GOOD", "加分", "扣分"] }
     };
+
+    // 3. 倒數日期與更新時間功能
+    function updateTimer() {
+      const now = new Date();
+      const diff = openingDate - now;
+      const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+      const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+      document.getElementById('timer').innerText = `更新：${now.getMonth()+1}/${now.getDate()} ${now.getHours()}:${now.getMinutes().toString().padStart(2,'0')} | 距離開學：${days} 天 ${hours} 時`;
+    }
 
     function switchUser(user) {
       document.getElementById('passwordArea').classList.toggle('hidden', user !== '姐');
@@ -133,15 +148,12 @@
       if (user === '姐' && document.getElementById('passwordInput').value !== "3672") {
         alert("密碼錯誤！"); return;
       }
-
       const type = document.getElementById('typeSelect').value;
       const item = document.getElementById('itemSelect').value;
       const valRaw = document.getElementById('valueInput').value.trim();
       const note = document.getElementById('noteInput').value;
-
       if (!type || !item) { alert("請選擇類別和項目！"); return; }
 
-      // --- 防呆邏輯 ---
       const isTextMode = (type === "規劃" || item === "其他");
       if (!valRaw) {
         alert(isTextMode ? "請輸入『做了什麼』！" : "請輸入『數量數字』！");
@@ -160,7 +172,7 @@
         if (user === "卉" && giftUrl && !["Error", "Success"].includes(giftUrl)) {
           document.getElementById('giftArea').classList.remove('hidden');
           document.getElementById('luckyGif').src = giftUrl;
-          alert("獲得寶藏！");
+          alert("發現掉落物！");
           refreshData();
         } else {
           alert("存檔成功！");
@@ -173,18 +185,32 @@
       fetch(`${gasUrl}?action=readData`)
         .then(res => res.json())
         .then(data => {
-          document.getElementById('balanceDisplay').innerText = data.total3C;
+          document.getElementById('balanceDisplay').innerText = data.total3C || 0;
           document.getElementById('todayList').innerHTML = data.todayLogs.join("<br>");
-          document.getElementById('historyList').innerHTML = data.last10.join("<br>");
+          
+          // 4. 顯示悄悄話內容
+          document.getElementById('noteList').innerHTML = (data.notes && data.notes.length > 0) ? data.notes.join("<br>") : "目前沒有留言";
+          
+          // 5. 顯示最近 10 筆紀錄
+          document.getElementById('historyList').innerHTML = (data.last10 && data.last10.length > 0) ? data.last10.join("<br>") : "暫無歷史紀錄";
+          
           const gallery = document.getElementById('chestGallery');
           gallery.innerHTML = data.myChest.map(url => `<img src="${url}" style="width:50px;height:50px;object-fit:cover;">`).join("");
         }).catch(err => {
-          document.getElementById('historyList').innerText = "資料讀取失敗，請檢查網路或試算表內容。";
+          console.error(err);
+          document.getElementById('historyList').innerText = "資料讀取失敗，請確認網路或試算表內容。";
         });
     }
 
     function toggleChest() { document.getElementById('chestGallery').classList.toggle('hidden'); }
-    window.onload = () => { switchUser('卉'); refreshData(); };
+    
+    // 初始化
+    window.onload = () => { 
+      switchUser('卉'); 
+      refreshData(); 
+      updateTimer(); 
+      setInterval(updateTimer, 60000); // 每分鐘更新一次日期顯示
+    };
   </script>
 </body>
 </html>

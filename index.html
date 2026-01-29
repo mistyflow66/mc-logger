@@ -22,8 +22,22 @@
     .score-table th { background: #795548; }
     .hidden { display: none !important; }
     #chestGallery { display: flex; flex-wrap: wrap; gap: 5px; background: #1e1e1e; padding: 10px; margin-top: 5px; border-radius: 5px; }
-    .stamp-card { display: flex; justify-content: space-around; background: #000; padding: 10px; margin-top: 10px; border: 2px solid #555; }
-    .stamp-item { font-size: 14px; color: #ffeb3b; }
+    .stamp-card { 
+      display: flex; 
+      justify-content: space-between; /* 讓兩個項目各據左右 */
+      align-items: center;            /* 確保垂直中心對齊 */
+      background: #000; 
+      padding: 10px 15px;             /* 增加左右內距 */
+      margin-top: 10px; 
+      border: 2px solid #555; 
+    }
+    .stamp-item { 
+      font-size: 14px; 
+      color: #ffeb3b; 
+      flex: 1;                        /* 讓兩個項目平分空間 */
+      text-align: center;             /* 文字置中 */
+      white-space: nowrap;            /* 強制文字不換行 */
+    }
   </style>
 </head>
 <body>
@@ -90,7 +104,9 @@
         <tbody>
           <tr><td>跳繩</td><td>100 下</td><td>+ 5</td></tr>
           <tr><td>跑步</td><td>200 公尺</td><td>+ 5</td></tr>
-          <tr><td>仰臥起坐</td><td>1 分鐘</td><td>+ 5</td></tr>
+          <tr><td>仰臥起坐</td><td>1 次</td><td>+ 5</td></tr>
+          <tr style="color: #ffeb3b; background: #333;"><td>⏰ 自己起床</td><td>滿 10 次</td><td>+ 5 (額外獎勵)</td></tr>
+          <tr style="color: #ffeb3b; background: #333;"><td>❤️ GOOD</td><td>滿 10 次</td><td>+ 10 (額外獎勵)</td></tr>
         </tbody>
       </table>
     </div>
@@ -213,3 +229,4 @@
   </script>
 </body>
 </html>
+

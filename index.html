@@ -4,56 +4,34 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>麥塊冒險</title>
-  
-  <link rel="apple-touch-icon" href="https://meee.com.tw/x9oTG9x.png">
-  <link rel="icon" type="image/png" href="https://meee.com.tw/x9oTG9x.png">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-
   <style>
     :root { --mc-green: #388E3C; --mc-dirt: #795548; --mc-stone: #424242; }
     body { font-family: 'Segoe UI', sans-serif; background: #2c2c2c; color: white; padding: 15px; text-align: center; margin:0; }
     .container { background: #3c3c3c; border: 4px solid #000; padding: 20px; border-radius: 4px; max-width: 400px; margin: auto; }
     h2 { color: #8bc34a; text-shadow: 2px 2px #000; margin: 10px 0; }
-    
     .dashboard { background: #000; border: 4px solid #555; padding: 15px; margin-bottom: 15px; }
     .balance-value { color: #00e676; font-size: 32px; font-weight: bold; font-family: 'Courier New', monospace; }
-    
     .user-select { background: #4e4e4e; border: 2px solid #000; padding: 10px; margin-bottom: 15px; display: flex; justify-content: space-around; align-items: center; }
     .radio-group { cursor: pointer; display: flex; align-items: center; }
-    .radio-group input { width: auto; margin-right: 5px; }
-
-    label { display: block; text-align: left; margin: 10px 0 5px; font-weight: bold; color: #bbb; }
     select, input { width: 100%; padding: 12px; margin-bottom: 10px; border: 3px solid #000; background: #fff; box-sizing: border-box; font-size: 16px; color: #000; }
-    
     button { width: 100%; padding: 15px; background: var(--mc-green); color: white; border: 3px solid #1b5e20; font-weight: bold; font-size: 18px; cursor: pointer; box-shadow: 0 4px #1b5e20; }
-    button:active { transform: translateY(2px); box-shadow: 0 2px #1b5e20; }
-
     .daily-log { background: #252525; border: 2px solid #555; padding: 10px; margin-top: 15px; text-align: left; }
     .log-title { border-bottom:1px solid #555; font-weight:bold; color: #ffeb3b; margin-bottom: 5px; }
-    .stars { font-size: 16px; color: #ffeb3b; text-align: left; background: #4e4e4e; padding: 10px; border: 2px solid #000; margin-bottom: 15px; }
-    
     .score-table { width: 100%; border-collapse: collapse; margin-top: 5px; font-size: 13px; color: #fff; }
     .score-table td, .score-table th { border: 1px solid #555; padding: 6px; text-align: center; }
     .score-table th { background: #795548; }
-
-    #timer { font-size: 12px; color: #aaa; margin-top: 10px; }
-    /* 修正了 !important 的位置 */
     .hidden { display: none !important; }
+    #chestGallery { display: flex; flex-wrap: wrap; gap: 5px; background: #1e1e1e; padding: 10px; margin-top: 5px; border-radius: 5px; }
   </style>
 </head>
 <body>
   <div class="container">
     <h2>💎 冒險儀表板</h2>
-    <div id="timer">載入時間中...</div>
+    <div id="timer">載入中...</div>
 
     <div class="dashboard">
       <div style="color:#fff; font-size:14px;">🔋 目前 3C 能量</div>
       <div class="balance-value" id="balanceDisplay">0</div>
-    </div>
-
-    <div class="stars">
-      <div id="wakeupStars">自己起床: ----------</div>
-      <div id="goodStars">GOOD: ----------</div>
     </div>
 
     <div class="user-select">
@@ -68,22 +46,22 @@
 
     <form id="questForm">
       <select id="typeSelect" onchange="updateItems()" required></select>
-      <select id="itemSelect" required></select>
+      <select id="itemSelect" onchange="checkValueType()" required></select>
       <div id="valueArea">
         <input id="valueInput" placeholder="數量/分數">
       </div>
-      <input type="text" id="noteInput"> 
-      <button type="button" onclick="submitForm()" style="margin-top:10px;">💾 存檔紀錄</button>
+      <input type="text" id="noteInput" placeholder="寫點備註..."> 
+      <button type="button" onclick="submitForm()">💾 存檔紀錄</button>
     </form>
-
-    <div id="giftArea" class="hidden" style="margin-top:20px; background:#000; border:3px dashed #ffeb3b; padding:10px;">
-      <div style="color:#ffeb3b; margin-bottom:10px;">🍎 發現掉落物！</div>
-      <img id="luckyGif" src="" style="width:100%; border-radius:8px;">
-    </div>
 
     <div id="chestSection" style="margin-top:10px; text-align:left;">
       <div style="cursor:pointer; color:#55efc4; font-size:14px;" onclick="toggleChest()">📦 我的寶箱 (點開相簿)</div>
-      <div id="chestGallery" class="hidden" style="display:flex; flex-wrap:wrap; gap:5px; background:#1e1e1e; padding:10px; margin-top:5px; border-radius:5px;"></div>
+      <div id="chestGallery" class="hidden"></div>
+    </div>
+
+    <div id="giftArea" class="hidden" style="margin-top:20px; background:#000; border:3px dashed #ffeb3b; padding:10px;">
+      <div style="color:#ffeb3b;">🍎 發現掉落物！</div>
+      <img id="luckyGif" src="" style="width:100%; border-radius:8px;">
     </div>
     
     <div class="daily-log">
@@ -91,42 +69,35 @@
       <div id="todayList" style="color:#8bc34a; font-size: 14px;"></div>
     </div>
 
-    <div class="daily-log" style="border-color: #fab1a0;">
-      <div class="log-title" style="color: #ff7675;">📢 悄悄話留言板</div>
-      <div id="noteList" style="font-size: 13px; color: #dfe6e9;"></div>
-    </div>
-
     <div class="daily-log">
       <div class="log-title">🕰️ 最近 10 筆紀錄</div>
       <div id="historyList" style="font-size: 12px; color: #bbb;"></div>
+    </div>
+
+    <div class="daily-log" style="border-color: #8bc34a;">
+      <div class="log-title" style="color: #8bc34a;">📊 運動換算表</div>
+      <table class="score-table">
+        <thead>
+          <tr><th>項目</th><th>基準單位</th><th>能量</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>跳繩</td><td>100 下</td><td>+ 5</td></tr>
+          <tr><td>跑步</td><td>200 公尺</td><td>+ 5</td></tr>
+          <tr><td>仰臥起坐</td><td>1 次</td><td>+ 5</td></tr>
+        </tbody>
+      </table>
     </div>
   </div>
 
   <script>
     const gasUrl = "https://script.google.com/macros/s/AKfycby8MaeORmgHynbc4qTnjUUCyn12NWZYJP6HEhCZ1wEsXOX3fnTlQT-LP9l8FRNQf4cG/exec"; 
-    const openingDate = new Date("2026-02-23");
-    const slogans = ["今天的心情...", "你累了嗎？", "還在ㄊㄟ", "想跟大姐說的話...", "寫點備註..."];
     const optionsMap = {
-      "卉": { "運動": ["跳繩", "跑步", "仰臥起坐"], "3C": ["看電視", "用手機", "玩電腦"], "規劃": ["閱讀", "做小書", "練習英文", "字音字形","織毛線", "其他"] },
+      "卉": { "運動": ["跳繩", "跑步", "仰臥起坐"], "3C": ["看電視", "用手機", "玩電腦"], "規劃": ["閱讀", "做小書", "練習英文", "其他"] },
       "姐": { "運動": ["跳繩", "跑步", "仰臥起坐"], "3C": ["看電視", "用手機", "玩電腦"], "獎勵": ["自己起床", "GOOD", "加分", "扣分"] }
     };
 
-    window.onload = function() {
-      switchUser('卉');
-      refreshData();
-      setInterval(updateTimer, 1000);
-      document.getElementById('noteInput').placeholder = slogans[Math.floor(Math.random() * slogans.length)];
-    };
-
-    function updateTimer() {
-      const now = new Date();
-      const diff = openingDate - now;
-      const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-      document.getElementById('timer').innerText = `更新時間：${now.getMonth()+1}/${now.getDate()} ${now.getHours()}:${now.getMinutes().toString().padStart(2,'0')} 距離開學還有 ${days} 天`;
-    }
-
     function switchUser(user) {
-      document.getElementById('passwordArea').className = (user === '姐') ? '' : 'hidden';
+      document.getElementById('passwordArea').classList.toggle('hidden', user !== '姐');
       const typeSelect = document.getElementById('typeSelect');
       typeSelect.innerHTML = '<option value="">-- 選擇類別 --</option>';
       Object.keys(optionsMap[user]).forEach(t => typeSelect.add(new Option(t, t)));
@@ -134,53 +105,27 @@
     }
 
     function updateItems() {
-      const type = document.getElementById('typeSelect').value;
       const user = document.querySelector('input[name="user"]:checked').value;
+      const type = document.getElementById('typeSelect').value;
       const itemSelect = document.getElementById('itemSelect');
-      const valInput = document.getElementById('valueInput');
-
       itemSelect.innerHTML = '<option value="">-- 選擇項目 --</option>';
       if (optionsMap[user][type]) {
         optionsMap[user][type].forEach(i => itemSelect.add(new Option(i, i)));
       }
-
-      itemSelect.onchange = function() {
-        // 修改重點：當類別是「規劃」或者是項目選到「其他」時，變成文字框
-        if (type === "規劃" || this.value === "其他") {
-          valInput.type = "text";
-          valInput.placeholder = "做了什麼？";
-        } else {
-          valInput.type = "number";
-          valInput.placeholder = "數量/分數";
-        }
-      };
+      checkValueType();
     }
 
-    function refreshData() {
-      fetch(`${gasUrl}?action=readData`)
-        .then(res => res.json())
-        .then(data => {
-          document.getElementById('balanceDisplay').innerText = data.total3C;
-          document.getElementById('wakeupStars').innerText = "自己起床: " + "⭐".repeat(data.wakeup) + "-".repeat(10-data.wakeup);
-          document.getElementById('goodStars').innerText = "GOOD: " + "♥️".repeat(data.good) + "-".repeat(10-data.good);
-          document.getElementById('todayList').innerHTML = data.todayLogs.join("<br>") + `<br><b>-今日累積的3C能量：🔋${data.today3Csum}-</b>`;
-          document.getElementById('noteList').innerHTML = data.notes.join("<br>");
-          document.getElementById('historyList').innerHTML = data.last10.join("<br>");
-          
-          const gallery = document.getElementById('chestGallery');
-          gallery.innerHTML = "";
-          if (data.myChest && data.myChest.length > 0) {
-            data.myChest.forEach(url => {
-              gallery.innerHTML += `<img src="${url}" style="width:60px; height:60px; object-fit:cover; border:1px solid #555; border-radius:4px;">`;
-            });
-          } else {
-            gallery.innerHTML = "<span style='color:#777; font-size:12px;'>目前還沒有寶藏喔...</span>";
-          }
-        });
-    }
-
-    function toggleChest() {
-      document.getElementById('chestGallery').classList.toggle('hidden');
+    function checkValueType() {
+      const type = document.getElementById('typeSelect').value;
+      const item = document.getElementById('itemSelect').value;
+      const valInput = document.getElementById('valueInput');
+      if (type === "規劃" || item === "其他") {
+        valInput.type = "text";
+        valInput.placeholder = "做了什麼？";
+      } else {
+        valInput.type = "number";
+        valInput.placeholder = "輸入數量(數字)";
+      }
     }
 
     function submitForm() {
@@ -191,38 +136,55 @@
 
       const type = document.getElementById('typeSelect').value;
       const item = document.getElementById('itemSelect').value;
-      const valRaw = document.getElementById('valueInput').value || "";
+      const valRaw = document.getElementById('valueInput').value.trim();
       const note = document.getElementById('noteInput').value;
 
-      if(!type || !item) { alert("項目要填完整喔！"); return; }
+      if (!type || !item) { alert("請選擇類別和項目！"); return; }
 
-      let otherNote = "";
-      let finalVal = 0;
-
-      // 邏輯判斷：如果是「規劃」或「其他」，內容存入 otherNote (E欄)，能量設為 0
-      if (type === "規劃" || item === "其他") {
-        otherNote = valRaw;
-        finalVal = 0;
-      } else {
-        finalVal = valRaw;
-        otherNote = "";
+      // --- 防呆邏輯 ---
+      const isTextMode = (type === "規劃" || item === "其他");
+      if (!valRaw) {
+        alert(isTextMode ? "請輸入『做了什麼』！" : "請輸入『數量數字』！");
+        return;
+      }
+      if (!isTextMode && isNaN(valRaw)) {
+        alert("這項請輸入『數字』，不要輸入文字！");
+        return;
       }
 
+      const finalVal = isTextMode ? 0 : valRaw;
+      const otherNote = isTextMode ? valRaw : "";
       const url = `${gasUrl}?action=addData&user=${user}&category=${type}&item=${item}&value=${finalVal}&otherNote=${encodeURIComponent(otherNote)}&note=${encodeURIComponent(note)}`;
       
       fetch(url).then(res => res.text()).then(giftUrl => {
-        // 如果卉抽到東西，giftUrl 會傳回圖片網址
         if (user === "卉" && giftUrl && !["Error", "Success"].includes(giftUrl)) {
           document.getElementById('giftArea').classList.remove('hidden');
           document.getElementById('luckyGif').src = giftUrl;
-          alert("太棒了！發現一個掉落物！");
-          refreshData(); // 更新但不重整，可以看到圖片
+          alert("獲得寶藏！");
+          refreshData();
         } else {
           alert("存檔成功！");
           location.reload();
         }
       });
     }
+
+    function refreshData() {
+      fetch(`${gasUrl}?action=readData`)
+        .then(res => res.json())
+        .then(data => {
+          document.getElementById('balanceDisplay').innerText = data.total3C;
+          document.getElementById('todayList').innerHTML = data.todayLogs.join("<br>");
+          document.getElementById('historyList').innerHTML = data.last10.join("<br>");
+          const gallery = document.getElementById('chestGallery');
+          gallery.innerHTML = data.myChest.map(url => `<img src="${url}" style="width:50px;height:50px;object-fit:cover;">`).join("");
+        }).catch(err => {
+          document.getElementById('historyList').innerText = "資料讀取失敗，請檢查網路或試算表內容。";
+        });
+    }
+
+    function toggleChest() { document.getElementById('chestGallery').classList.toggle('hidden'); }
+    window.onload = () => { switchUser('卉'); refreshData(); };
   </script>
 </body>
 </html>

@@ -162,6 +162,8 @@
 
     function submitForm() {
       const user = document.querySelector('input[name="user"]:checked').value;
+      const submitBtn = document.querySelector('button[onclick="submitForm()"]'); // 抓取按鈕
+
       if (user === '姐' && document.getElementById('passwordInput').value !== "3672") {
         alert("密碼錯誤！"); return;
       }
@@ -181,43 +183,41 @@
         return;
       }
 
+      // --- 開始「載入中」狀態 ---
+      submitBtn.disabled = true;
+      submitBtn.innerText = "⏳ 傳送中，請稍候...";
+      submitBtn.style.background = "#95a5a6"; // 變成灰色
+      submitBtn.style.boxShadow = "none";
+
       const finalVal = isTextMode ? 0 : valRaw;
       const otherNote = isTextMode ? valRaw : "";
       const url = `${gasUrl}?action=addData&user=${user}&category=${type}&item=${item}&value=${finalVal}&otherNote=${encodeURIComponent(otherNote)}&note=${encodeURIComponent(note)}`;
       
-      fetch(url).then(res => res.text()).then(giftUrl => {
-        if (user === "卉" && giftUrl && !["Error", "Success"].includes(giftUrl)) {
-          document.getElementById('giftArea').classList.remove('hidden');
-          document.getElementById('luckyGif').src = giftUrl;
-          alert("發現掉落物！");
-          refreshData();
-        } else {
-          alert("存檔成功！");
-          location.reload();
-        }
-      });
-    }
-
-    function refreshData() {
-      fetch(`${gasUrl}?action=readData`)
-        .then(res => res.json())
-        .then(data => {
-          document.getElementById('balanceDisplay').innerText = data.total3C || 0;
-          document.getElementById('todayList').innerHTML = (data.todayLogs && data.todayLogs.length > 0) ? data.todayLogs.join("<br>") : "今天還沒有紀錄";
-          
-          // 顯示集點卡數據
-          document.getElementById('wakeupCount').innerText = data.wakeup || 0;
-          document.getElementById('goodCount').innerText = data.good || 0;
-          
-          document.getElementById('noteList').innerHTML = (data.notes && data.notes.length > 0) ? data.notes.join("<br>") : "目前沒有留言";
-          
-          const gallery = document.getElementById('chestGallery');
-          gallery.innerHTML = data.myChest.map(url => `<img src="${url}" style="width:50px;height:50px;object-fit:cover;">`).join("");
-        }).catch(err => {
+      fetch(url)
+        .then(res => res.text())
+        .then(giftUrl => {
+          if (user === "卉" && giftUrl && !["Error", "Success"].includes(giftUrl)) {
+            document.getElementById('giftArea').classList.remove('hidden');
+            document.getElementById('luckyGif').src = giftUrl;
+            alert("發現掉落物！");
+            refreshData();
+          } else {
+            alert("存檔成功！");
+            location.reload();
+          }
+        })
+        .catch(err => {
+          alert("連線超時或出錯，請再試一次！");
           console.error(err);
+        })
+        .finally(() => {
+          // --- 結束「載入中」狀態（如果沒有重新整理頁面的話） ---
+          submitBtn.disabled = false;
+          submitBtn.innerText = "💾 存檔紀錄";
+          submitBtn.style.background = "var(--mc-green)";
+          submitBtn.style.boxShadow = "0 4px #1b5e20";
         });
     }
-
     function toggleChest() { document.getElementById('chestGallery').classList.toggle('hidden'); }
     
     window.onload = () => { 
@@ -229,4 +229,5 @@
   </script>
 </body>
 </html>
+
 

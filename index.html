@@ -69,7 +69,7 @@
       <select id="typeSelect" onchange="updateItems()" required></select>
       <select id="itemSelect" required></select>
       <div id="valueArea">
-        <input type="number" id="valueInput" placeholder="數量/分數">
+        <input id="valueInput" placeholder="數量/分數">
       </div>
       <input type="text" id="noteInput"> 
       <button type="button" onclick="submitForm()" style="margin-top:10px;">💾 存檔紀錄</button>
@@ -99,22 +99,6 @@
       <div class="log-title">🕰️ 最近 10 筆紀錄</div>
       <div id="historyList" style="font-size: 12px; color: #bbb;"></div>
     </div>
-
-    <div class="daily-log" style="border-color: #8bc34a;">
-      <div class="log-title" style="color: #8bc34a;">📊 運動與獎勵計分</div>
-      <table class="score-table">
-        <thead>
-          <tr><th>項目</th><th>基準單位</th><th>獎勵 (3C能量)</th></tr>
-        </thead>
-        <tbody>
-          <tr><td>跳繩</td><td>100 下</td><td>+ 5 分</td></tr>
-          <tr><td>跑步</td><td>200 公尺</td><td>+ 5 分</td></tr>
-          <tr><td>仰臥起坐</td><td>1 分鐘</td><td>+ 5 分</td></tr>
-          <tr><td>自己起床</td><td>滿 10 次</td><td>+ 5 分</td></tr>
-          <tr><td>GOOD</td><td>滿 10 個</td><td>+ 10 分</td></tr>
-        </tbody>
-      </table>
-    </div>
   </div>
 
   <script>
@@ -122,7 +106,7 @@
     const openingDate = new Date("2026-02-23");
     const slogans = ["今天的心情...", "你累了嗎？", "還在ㄊㄟ", "想跟大姐說的話...", "寫點備註..."];
     const optionsMap = {
-      "卉": { "運動": ["跳繩", "跑步", "仰臥起坐"], "3C": ["看電視", "用手機", "玩電腦"], "規劃": ["閱讀", "做小書", "練習英文", "其他"] },
+      "卉": { "運動": ["跳繩", "跑步", "仰臥起坐"], "3C": ["看電視", "用手機", "玩電腦"], "規劃": ["閱讀", "做小書", "練習英文", "字音字形","織毛線", "其他"] },
       "姐": { "運動": ["跳繩", "跑步", "仰臥起坐"], "3C": ["看電視", "用手機", "玩電腦"], "獎勵": ["自己起床", "GOOD", "加分", "扣分"] }
     };
 
@@ -152,10 +136,22 @@
       const user = document.querySelector('input[name="user"]:checked').value;
       const type = document.getElementById('typeSelect').value;
       const itemSelect = document.getElementById('itemSelect');
+      const valInput = document.getElementById('valueInput');
+
       itemSelect.innerHTML = '<option value="">-- 選擇項目 --</option>';
       if (optionsMap[user][type]) {
         optionsMap[user][type].forEach(i => itemSelect.add(new Option(i, i)));
       }
+
+      itemSelect.onchange = function() {
+        if (this.value === "其他") {
+          valInput.type = "text";
+          valInput.placeholder = "做了什麼？";
+        } else {
+          valInput.type = "number";
+          valInput.placeholder = "數量/分數";
+        }
+      };
     }
 
     function refreshData() {
@@ -193,19 +189,31 @@
 
       const type = document.getElementById('typeSelect').value;
       const item = document.getElementById('itemSelect').value;
-      const val = document.getElementById('valueInput').value || 0;
+      const valRaw = document.getElementById('valueInput').value || 0;
       const note = document.getElementById('noteInput').value;
 
       if(!type || !item) { alert("項目要填完整喔！"); return; }
 
-      const url = `${gasUrl}?action=addData&user=${user}&category=${type}&item=${item}&value=${val}&note=${note}`;
+      let otherNote = "";
+      let finalVal = 0;
+
+      // 邏輯判斷：如果是「其他」，數值設為0，文字存入 otherNote (E欄)
+      if (item === "其他") {
+        otherNote = valRaw;
+        finalVal = 0;
+      } else {
+        finalVal = valRaw;
+        otherNote = "";
+      }
+
+      const url = `${gasUrl}?action=addData&user=${user}&category=${type}&item=${item}&value=${finalVal}&otherNote=${encodeURIComponent(otherNote)}&note=${encodeURIComponent(note)}`;
       
       fetch(url).then(res => res.text()).then(giftUrl => {
-        if (user === "卉" && giftUrl && giftUrl !== "Error") {
+        if (user === "卉" && giftUrl && giftUrl !== "Error" && giftUrl !== "Success") {
           document.getElementById('giftArea').classList.remove('hidden');
           document.getElementById('luckyGif').src = giftUrl;
           alert("太棒了！發現一個掉落物！");
-          refreshData(); // 靜態更新寶箱
+          refreshData();
         } else {
           alert("存檔成功！");
           location.reload();

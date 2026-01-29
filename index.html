@@ -18,12 +18,10 @@
     .dashboard { background: #000; border: 4px solid #555; padding: 15px; margin-bottom: 15px; }
     .balance-value { color: #00e676; font-size: 32px; font-weight: bold; font-family: 'Courier New', monospace; }
     
-    /* 使用者勾選區 */
     .user-select { background: #4e4e4e; border: 2px solid #000; padding: 10px; margin-bottom: 15px; display: flex; justify-content: space-around; align-items: center; }
     .radio-group { cursor: pointer; display: flex; align-items: center; }
     .radio-group input { width: auto; margin-right: 5px; }
 
-    /* 輸入框樣式 */
     label { display: block; text-align: left; margin: 10px 0 5px; font-weight: bold; color: #bbb; }
     select, input { width: 100%; padding: 12px; margin-bottom: 10px; border: 3px solid #000; background: #fff; box-sizing: border-box; font-size: 16px; color: #000; }
     
@@ -34,7 +32,6 @@
     .log-title { border-bottom:1px solid #555; font-weight:bold; color: #ffeb3b; margin-bottom: 5px; }
     .stars { font-size: 16px; color: #ffeb3b; text-align: left; background: #4e4e4e; padding: 10px; border: 2px solid #000; margin-bottom: 15px; }
     
-    /* 計分表格樣式 */
     .score-table { width: 100%; border-collapse: collapse; margin-top: 5px; font-size: 13px; color: #fff; }
     .score-table td, .score-table th { border: 1px solid #555; padding: 6px; text-align: center; }
     .score-table th { background: #795548; }
@@ -46,7 +43,6 @@
 <body>
   <div class="container">
     <h2>💎 冒險儀表板</h2>
-    
     <div id="timer">載入時間中...</div>
 
     <div class="dashboard">
@@ -72,15 +68,23 @@
     <form id="questForm">
       <select id="typeSelect" onchange="updateItems()" required></select>
       <select id="itemSelect" required></select>
-      
       <div id="valueArea">
         <input type="number" id="valueInput" placeholder="數量/分數">
       </div>
-
       <input type="text" id="noteInput"> 
       <button type="button" onclick="submitForm()" style="margin-top:10px;">💾 存檔紀錄</button>
     </form>
 
+    <div id="giftArea" class="hidden" style="margin-top:20px; background:#000; border:3px dashed #ffeb3b; padding:10px;">
+      <div style="color:#ffeb3b; margin-bottom:10px;">🍎 發現掉落物！</div>
+      <img id="luckyGif" src="" style="width:100%; border-radius:8px;">
+    </div>
+
+    <div id="chestSection" style="margin-top:10px; text-align:left;">
+      <div style="cursor:pointer; color:#55efc4; font-size:14px;" onclick="toggleChest()">📦 我的寶箱 (點開相簿)</div>
+      <div id="chestGallery" class="hidden" style="display:flex; flex-wrap:wrap; gap:5px; background:#1e1e1e; padding:10px; margin-top:5px; border-radius:5px;"></div>
+    </div>
+    
     <div class="daily-log">
       <div class="log-title">📅 今天的日誌</div>
       <div id="todayList" style="color:#8bc34a; font-size: 14px;"></div>
@@ -96,7 +100,7 @@
       <div id="historyList" style="font-size: 12px; color: #bbb;"></div>
     </div>
 
-  <div class="daily-log" style="border-color: #8bc34a;">
+    <div class="daily-log" style="border-color: #8bc34a;">
       <div class="log-title" style="color: #8bc34a;">📊 運動與獎勵計分</div>
       <table class="score-table">
         <thead>
@@ -111,25 +115,15 @@
         </tbody>
       </table>
     </div>
-   </div>
-
-
+  </div>
 
   <script>
     const gasUrl = "https://script.google.com/macros/s/AKfycby8MaeORmgHynbc4qTnjUUCyn12NWZYJP6HEhCZ1wEsXOX3fnTlQT-LP9l8FRNQf4cG/exec"; 
-    const openingDate = new Date("2026-02-23"); // 開學日期
+    const openingDate = new Date("2026-02-23");
     const slogans = ["今天的心情...", "你累了嗎？", "還在ㄊㄟ", "想跟大姐說的話...", "寫點備註..."];
     const optionsMap = {
-      "卉": { 
-        "運動": ["跳繩", "跑步", "仰臥起坐"], 
-        "3C": ["看電視", "用手機", "玩電腦"], 
-        "規劃": ["閱讀", "做小書", "練習英文", "其他"] 
-      },
-      "姐": { 
-        "運動": ["跳繩", "跑步", "仰臥起坐"], 
-        "3C": ["看電視", "用手機", "玩電腦"], 
-        "獎勵": ["自己起床", "GOOD", "加分", "扣分"] 
-      }
+      "卉": { "運動": ["跳繩", "跑步", "仰臥起坐"], "3C": ["看電視", "用手機", "玩電腦"], "規劃": ["閱讀", "做小書", "練習英文", "其他"] },
+      "姐": { "運動": ["跳繩", "跑步", "仰臥起坐"], "3C": ["看電視", "用手機", "玩電腦"], "獎勵": ["自己起床", "GOOD", "加分", "扣分"] }
     };
 
     window.onload = function() {
@@ -147,14 +141,10 @@
     }
 
     function switchUser(user) {
+      document.getElementById('passwordArea').className = (user === '姐') ? '' : 'hidden';
       const typeSelect = document.getElementById('typeSelect');
-      const passArea = document.getElementById('passwordArea');
-      passArea.className = (user === '姐') ? '' : 'hidden';
-      
       typeSelect.innerHTML = '<option value="">-- 選擇類別 --</option>';
-      Object.keys(optionsMap[user]).forEach(t => {
-        typeSelect.add(new Option(t, t));
-      });
+      Object.keys(optionsMap[user]).forEach(t => typeSelect.add(new Option(t, t)));
       updateItems();
     }
 
@@ -173,13 +163,26 @@
         .then(res => res.json())
         .then(data => {
           document.getElementById('balanceDisplay').innerText = data.total3C;
-          // 同步更新集點卡 emoji 邏輯
           document.getElementById('wakeupStars').innerText = "自己起床: " + "⭐".repeat(data.wakeup) + "-".repeat(10-data.wakeup);
           document.getElementById('goodStars').innerText = "GOOD: " + "♥️".repeat(data.good) + "-".repeat(10-data.good);
           document.getElementById('todayList').innerHTML = data.todayLogs.join("<br>") + `<br><b>-今日累積的3C能量：🔋${data.today3Csum}-</b>`;
           document.getElementById('noteList').innerHTML = data.notes.join("<br>");
           document.getElementById('historyList').innerHTML = data.last10.join("<br>");
+          
+          const gallery = document.getElementById('chestGallery');
+          gallery.innerHTML = "";
+          if (data.myChest && data.myChest.length > 0) {
+            data.myChest.forEach(url => {
+              gallery.innerHTML += `<img src="${url}" style="width:60px; height:60px; object-fit:cover; border:1px solid #555; border-radius:4px;">`;
+            });
+          } else {
+            gallery.innerHTML = "<span style='color:#777; font-size:12px;'>目前還沒有寶藏喔...</span>";
+          }
         });
+    }
+
+    function toggleChest() {
+      document.getElementById('chestGallery').classList.toggle('hidden');
     }
 
     function submitForm() {
@@ -190,20 +193,25 @@
 
       const type = document.getElementById('typeSelect').value;
       const item = document.getElementById('itemSelect').value;
-      const val = document.getElementById('valueInput').value || 0; // 預設為0，確保獎勵項目能送出
+      const val = document.getElementById('valueInput').value || 0;
       const note = document.getElementById('noteInput').value;
 
       if(!type || !item) { alert("項目要填完整喔！"); return; }
 
       const url = `${gasUrl}?action=addData&user=${user}&category=${type}&item=${item}&value=${val}&note=${note}`;
       
-      fetch(url, { mode: 'no-cors' }).then(() => {
-        alert("存檔成功！");
-        location.reload();
+      fetch(url).then(res => res.text()).then(giftUrl => {
+        if (user === "卉" && giftUrl && giftUrl !== "Error") {
+          document.getElementById('giftArea').classList.remove('hidden');
+          document.getElementById('luckyGif').src = giftUrl;
+          alert("太棒了！發現一個掉落物！");
+          refreshData(); // 靜態更新寶箱
+        } else {
+          alert("存檔成功！");
+          location.reload();
+        }
       });
     }
   </script>
 </body>
 </html>
-
-

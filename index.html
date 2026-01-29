@@ -22,6 +22,8 @@
     .score-table th { background: #795548; }
     .hidden { display: none !important; }
     #chestGallery { display: flex; flex-wrap: wrap; gap: 5px; background: #1e1e1e; padding: 10px; margin-top: 5px; border-radius: 5px; }
+    .stamp-card { display: flex; justify-content: space-around; background: #000; padding: 10px; margin-top: 10px; border: 2px solid #555; }
+    .stamp-item { font-size: 14px; color: #ffeb3b; }
   </style>
 </head>
 <body>
@@ -32,6 +34,11 @@
     <div class="dashboard">
       <div style="color:#fff; font-size:14px;">🔋 目前 3C 能量</div>
       <div class="balance-value" id="balanceDisplay">0</div>
+      
+      <div class="stamp-card">
+        <div class="stamp-item">⭐ 自己起床: <span id="wakeupCount">0</span>/10</div>
+        <div class="stamp-item">❤️ GOOD: <span id="goodCount">0</span>/10</div>
+      </div>
     </div>
 
     <div class="user-select">
@@ -74,11 +81,6 @@
       <div id="noteList" style="font-size: 13px; color: #dfe6e9;"></div>
     </div>
 
-    <div class="daily-log">
-      <div class="log-title">🕰️ 最近 10 筆紀錄</div>
-      <div id="historyList" style="font-size: 12px; color: #bbb;"></div>
-    </div>
-
     <div class="daily-log" style="border-color: #8bc34a;">
       <div class="log-title" style="color: #8bc34a;">📊 運動換算表</div>
       <table class="score-table">
@@ -88,7 +90,7 @@
         <tbody>
           <tr><td>跳繩</td><td>100 下</td><td>+ 5</td></tr>
           <tr><td>跑步</td><td>200 公尺</td><td>+ 5</td></tr>
-          <tr><td>仰臥起坐</td><td>1 次</td><td>+ 5</td></tr>
+          <tr><td>仰臥起坐</td><td>1 分鐘</td><td>+ 5</td></tr>
         </tbody>
       </table>
     </div>
@@ -102,7 +104,6 @@
       "姐": { "運動": ["跳繩", "跑步", "仰臥起坐"], "3C": ["看電視", "用手機", "玩電腦"], "獎勵": ["自己起床", "GOOD", "加分", "扣分"] }
     };
 
-    // 3. 倒數日期與更新時間功能
     function updateTimer() {
       const now = new Date();
       const diff = openingDate - now;
@@ -186,30 +187,28 @@
         .then(res => res.json())
         .then(data => {
           document.getElementById('balanceDisplay').innerText = data.total3C || 0;
-          document.getElementById('todayList').innerHTML = data.todayLogs.join("<br>");
+          document.getElementById('todayList').innerHTML = (data.todayLogs && data.todayLogs.length > 0) ? data.todayLogs.join("<br>") : "今天還沒有紀錄";
           
-          // 4. 顯示悄悄話內容
+          // 顯示集點卡數據
+          document.getElementById('wakeupCount').innerText = data.wakeup || 0;
+          document.getElementById('goodCount').innerText = data.good || 0;
+          
           document.getElementById('noteList').innerHTML = (data.notes && data.notes.length > 0) ? data.notes.join("<br>") : "目前沒有留言";
-          
-          // 5. 顯示最近 10 筆紀錄
-          document.getElementById('historyList').innerHTML = (data.last10 && data.last10.length > 0) ? data.last10.join("<br>") : "暫無歷史紀錄";
           
           const gallery = document.getElementById('chestGallery');
           gallery.innerHTML = data.myChest.map(url => `<img src="${url}" style="width:50px;height:50px;object-fit:cover;">`).join("");
         }).catch(err => {
           console.error(err);
-          document.getElementById('historyList').innerText = "資料讀取失敗，請確認網路或試算表內容。";
         });
     }
 
     function toggleChest() { document.getElementById('chestGallery').classList.toggle('hidden'); }
     
-    // 初始化
     window.onload = () => { 
       switchUser('卉'); 
       refreshData(); 
       updateTimer(); 
-      setInterval(updateTimer, 60000); // 每分鐘更新一次日期顯示
+      setInterval(updateTimer, 60000);
     };
   </script>
 </body>

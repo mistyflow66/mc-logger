@@ -23,8 +23,24 @@
     .hidden { display: none !important; }
     
     /* 寶箱樣式優化 */
-    #chestGallery { display: flex; flex-wrap: wrap; gap: 8px; background: #1e1e1e; padding: 10px; margin-top: 5px; border-radius: 5px; justify-content: center; }
-    .chest-img { width: 65px; height: 65px; object-fit: cover; border: 2px solid #555; border-radius: 4px; }
+        #chestGallery { 
+      display: grid; 
+      /* 固定 5 欄，每欄平分寬度 */
+      grid-template-columns: repeat(5, 1fr); 
+      gap: 8px; 
+      background: #1e1e1e; 
+      padding: 10px; 
+      margin-top: 5px; 
+      border-radius: 5px; 
+    }
+    .chest-img { 
+      width: 100%; /* 寬度自動填滿格子 */
+      aspect-ratio: 1 / 1; /* 強制圖片變成正方形 */
+      object-fit: cover; 
+      border: 2px solid #555; 
+      border-radius: 4px; 
+    }
+
     .pagination { display: flex; justify-content: center; align-items: center; gap: 15px; margin-top: 8px; font-size: 14px; }
     .page-btn { background: #555; color: white; border: none; padding: 5px 10px; cursor: pointer; border-radius: 3px; }
     .page-btn:disabled { background: #222; color: #555; cursor: not-allowed; }

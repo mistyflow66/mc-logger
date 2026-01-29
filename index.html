@@ -91,25 +91,28 @@
       <div id="noteList" style="font-size: 13px; color: #dfe6e9;"></div>
     </div>
 
-    <div class="daily-log" style="border-color: #8bc34a;">
-      <div class="log-title" style="color: #8bc34a;">📊 運動與獎勵計分</div>
-      <table class="score-table">
-        <thead>
-          <tr><th>項目</th><th>基準</th><th>能量獎勵</th></tr>
-        </thead>
-        <tbody>
-          <tr><td>運動 (跳繩/跑/仰)</td><td>每單位</td><td>依數值加分</td></tr>
-          <tr><td>自己起床</td><td>滿 10 次</td><td>+ 5 分能量</td></tr>
-          <tr><td>GOOD</td><td>滿 10 次</td><td>+ 10 分能量</td></tr>
-        </tbody>
-      </table>
-    </div>
-
     <div class="daily-log">
       <div class="log-title">🕰️ 最近 10 筆紀錄</div>
       <div id="historyList" style="font-size: 12px; color: #bbb;"></div>
     </div>
   </div>
+
+  <div class="daily-log" style="border-color: #8bc34a;">
+      <div class="log-title" style="color: #8bc34a;">📊 運動與獎勵計分</div>
+      <table class="score-table">
+        <thead>
+          <tr><th>項目</th><th>基準單位</th><th>獎勵 (3C能量)</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>跳繩</td><td>100 下</td><td>+ 5 分</td></tr>
+          <tr><td>跑步</td><td>200 公尺</td><td>+ 5 分</td></tr>
+          <tr><td>仰臥起坐</td><td>1 分鐘</td><td>+ 5 分</td></tr>
+          <tr><td>自己起床</td><td>滿 10 次</td><td>+ 5 分</td></tr>
+          <tr><td>GOOD</td><td>滿 10 個</td><td>+ 10 分</td></tr>
+        </tbody>
+      </table>
+    </div>
+
 
   <script>
     const gasUrl = "https://script.google.com/macros/s/AKfycby8MaeORmgHynbc4qTnjUUCyn12NWZYJP6HEhCZ1wEsXOX3fnTlQT-LP9l8FRNQf4cG/exec"; 
@@ -201,3 +204,4 @@
   </script>
 </body>
 </html>
+

@@ -105,6 +105,21 @@
       "姐": { "運動": ["跳繩", "跑步", "仰臥起坐"], "3C": ["看電視", "用手機", "玩電腦"], "獎勵": ["自己起床", "GOOD", "加分", "扣分"] }
     };
 
+    const randomPlaceholders = [
+      "寫點悄悄話...",
+      "還在ㄊㄟ",
+      "現在的心情...",
+      "(⁠・⁠∀⁠・⁠)",
+      "(⁠ㆁ⁠ω⁠ㆁ⁠)",
+      "(⁠◍⁠•⁠ᴗ⁠•⁠◍⁠)",
+      "今天運動了嗎？"
+    ];
+
+    function setRandomPlaceholder() {
+      const randomIndex = Math.floor(Math.random() * randomPlaceholders.length);
+      document.getElementById('noteInput').placeholder = randomPlaceholders[randomIndex];
+    }
+
     function updateTimer() {
       const now = new Date();
       const diff = openingDate - now;
@@ -145,7 +160,6 @@
       }
     }
 
-    // 補回 refreshData 函數
     function refreshData() {
       fetch(`${gasUrl}?action=readData`)
         .then(res => res.json())
@@ -168,10 +182,12 @@
       if (user === '姐' && document.getElementById('passwordInput').value !== "3672") {
         alert("密碼錯誤！"); return;
       }
+      
       const type = document.getElementById('typeSelect').value;
       const item = document.getElementById('itemSelect').value;
       const valRaw = document.getElementById('valueInput').value.trim();
-      const note = document.getElementById('noteInput').value;
+      const note = document.getElementById('noteInput').value.trim(); 
+      
       if (!type || !item) { alert("請選擇類別和項目！"); return; }
 
       const isTextMode = (type === "規劃" || item === "其他");
@@ -197,11 +213,14 @@
             document.getElementById('giftArea').classList.remove('hidden');
             document.getElementById('luckyGif').src = giftUrl;
             alert("發現掉落物！");
-            refreshData();
           } else {
             alert("存檔成功！");
-            location.reload();
           }
+          clearFormAfterSubmit();
+          refreshData();
+        })
+        .catch(err => {
+          alert("發生錯誤，請檢查網路！");
         })
         .finally(() => {
           submitBtn.disabled = false;
@@ -210,12 +229,21 @@
         });
     }
 
+    function clearFormAfterSubmit() {
+      document.getElementById('typeSelect').value = "";
+      document.getElementById('itemSelect').innerHTML = '<option value="">-- 選擇項目 --</option>';
+      document.getElementById('valueInput').value = "";
+      document.getElementById('noteInput').value = ""; 
+      setRandomPlaceholder(); 
+    }
+
     function toggleChest() { document.getElementById('chestGallery').classList.toggle('hidden'); }
     
     window.onload = () => { 
       switchUser('卉'); 
       refreshData(); 
       updateTimer(); 
+      setRandomPlaceholder();
       setInterval(updateTimer, 60000);
     };
   </script>

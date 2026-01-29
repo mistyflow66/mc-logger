@@ -37,7 +37,8 @@
     .score-table th { background: #795548; }
 
     #timer { font-size: 12px; color: #aaa; margin-top: 10px; }
-    .hidden { display: none; }
+    /* 修正了 !important 的位置 */
+    .hidden { display: none !important; }
   </style>
 </head>
 <body>
@@ -133,8 +134,8 @@
     }
 
     function updateItems() {
-      const user = document.querySelector('input[name="user"]:checked').value;
       const type = document.getElementById('typeSelect').value;
+      const user = document.querySelector('input[name="user"]:checked').value;
       const itemSelect = document.getElementById('itemSelect');
       const valInput = document.getElementById('valueInput');
 
@@ -144,7 +145,8 @@
       }
 
       itemSelect.onchange = function() {
-        if (this.value === "其他") {
+        // 修改重點：當類別是「規劃」或者是項目選到「其他」時，變成文字框
+        if (type === "規劃" || this.value === "其他") {
           valInput.type = "text";
           valInput.placeholder = "做了什麼？";
         } else {
@@ -189,7 +191,7 @@
 
       const type = document.getElementById('typeSelect').value;
       const item = document.getElementById('itemSelect').value;
-      const valRaw = document.getElementById('valueInput').value || 0;
+      const valRaw = document.getElementById('valueInput').value || "";
       const note = document.getElementById('noteInput').value;
 
       if(!type || !item) { alert("項目要填完整喔！"); return; }
@@ -197,8 +199,8 @@
       let otherNote = "";
       let finalVal = 0;
 
-      // 邏輯判斷：如果是「其他」，數值設為0，文字存入 otherNote (E欄)
-      if (item === "其他") {
+      // 邏輯判斷：如果是「規劃」或「其他」，內容存入 otherNote (E欄)，能量設為 0
+      if (type === "規劃" || item === "其他") {
         otherNote = valRaw;
         finalVal = 0;
       } else {
@@ -209,11 +211,12 @@
       const url = `${gasUrl}?action=addData&user=${user}&category=${type}&item=${item}&value=${finalVal}&otherNote=${encodeURIComponent(otherNote)}&note=${encodeURIComponent(note)}`;
       
       fetch(url).then(res => res.text()).then(giftUrl => {
-        if (user === "卉" && giftUrl && giftUrl !== "Error" && giftUrl !== "Success") {
+        // 如果卉抽到東西，giftUrl 會傳回圖片網址
+        if (user === "卉" && giftUrl && !["Error", "Success"].includes(giftUrl)) {
           document.getElementById('giftArea').classList.remove('hidden');
           document.getElementById('luckyGif').src = giftUrl;
           alert("太棒了！發現一個掉落物！");
-          refreshData();
+          refreshData(); // 更新但不重整，可以看到圖片
         } else {
           alert("存檔成功！");
           location.reload();

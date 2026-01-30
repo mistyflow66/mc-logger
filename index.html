@@ -48,9 +48,31 @@
       border-radius: 4px; 
     }
 
-    .pagination { display: flex; justify-content: center; align-items: center; gap: 15px; margin-top: 8px; font-size: 14px; }
-    .page-btn { background: #555; color: white; border: none; padding: 5px 10px; cursor: pointer; border-radius: 3px; }
-    .page-btn:disabled { background: #222; color: #555; cursor: not-allowed; }
+        /* 輕量化分頁控制（在相簿框內） */
+    .pagination { 
+      display: flex; 
+      justify-content: space-between; 
+      align-items: center; 
+      padding: 10px 5px 5px 5px; 
+      font-size: 13px;
+      color: #aaa;
+    }
+    .page-btn { 
+      background: none; 
+      border: none; 
+      color: #55efc4; 
+      text-decoration: underline; 
+      padding: 5px; 
+      font-size: 13px; 
+      width: auto; /* 取消原本 100% 寬度 */
+      box-shadow: none; /* 取消原本陰影 */
+      cursor: pointer;
+    }
+    .page-btn:disabled { 
+      color: #555; 
+      text-decoration: none; 
+      cursor: not-allowed; 
+    }
 
     .stamp-card { display: flex; justify-content: space-between; align-items: center; background: #000; padding: 10px 15px; margin-top: 10px; border: 2px solid #555; }
     .stamp-item { font-size: 14px; color: #ffeb3b; flex: 1; text-align: center; white-space: nowrap; }
@@ -90,13 +112,17 @@
       <button type="button" onclick="submitForm()">💾 存檔紀錄</button>
     </form>
 
-    <div id="chestSection" style="margin-top:10px; text-align:left;">
+      <div id="chestSection" style="margin-top:10px; text-align:left;">
       <div style="cursor:pointer; color:#55efc4; font-size:14px;" onclick="toggleChest()">📦 我的寶箱 (點開相簿)</div>
-      <div id="chestGallery" class="hidden"></div>
-      <div id="paginationControls" class="pagination hidden">
-        <button id="prevPage" class="page-btn" onclick="changePage(-1)">◀ 上一頁</button>
-        <span id="pageInfo">1 / 1</span>
-        <button id="nextPage" class="page-btn" onclick="changePage(1)">下一頁 ▶</button>
+      
+      <div id="chestWrapper" class="hidden" style="background: #1e1e1e; margin-top: 5px; border-radius: 5px;">
+        <div id="chestGallery"></div>
+        
+        <div id="paginationControls" class="pagination">
+          <button id="prevPage" class="page-btn" onclick="changePage(-1)">＜ 上一頁</button>
+          <span id="pageInfo" style="font-family: monospace;">1 / 1</span>
+          <button id="nextPage" class="page-btn" onclick="changePage(1)">下一頁 ＞</button>
+        </div>
       </div>
     </div>
 
@@ -294,19 +320,19 @@
       setRandomPlaceholder(); 
     }
 
-    function toggleChest() {
-      const gallery = document.getElementById('chestGallery');
-      const controls = document.getElementById('paginationControls');
-      const isHidden = gallery.classList.contains('hidden');
+        function toggleChest() {
+      const wrapper = document.getElementById('chestWrapper');
+      wrapper.classList.toggle('hidden');
       
-      gallery.classList.toggle('hidden');
-      // 如果打開寶箱，且圖片大於10張，才顯示分頁按鈕
-      if (!isHidden && allChestImages.length > itemsPerPage) {
-        controls.classList.remove('hidden');
+      // 打開時，如果圖片不足 10 張，隱藏底部的切換文字
+      const controls = document.getElementById('paginationControls');
+      if (allChestImages.length <= itemsPerPage) {
+        controls.style.visibility = 'hidden'; // 使用 visibility 保持高度，排版才不會跳動
       } else {
-        controls.classList.add('hidden');
+        controls.style.visibility = 'visible';
       }
     }
+
     
     window.onload = () => { 
       switchUser('卉'); 

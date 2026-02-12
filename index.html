@@ -53,9 +53,6 @@
       background: #1e1e1e; padding: 10px; margin-top: 5px; border-radius: 5px; 
     }
     .chest-img { width: 100%; aspect-ratio: 1 / 1; object-fit: cover; border: 2px solid #555; border-radius: 4px; }
-    .pagination { display: flex; justify-content: space-between; align-items: center; padding: 10px 5px 5px 5px; font-size: 13px; color: #aaa; }
-    .page-btn { background: none; border: none; color: #55efc4; text-decoration: underline; padding: 5px; font-size: 13px; width: auto; box-shadow: none; cursor: pointer; }
-    .page-btn:disabled { color: #555; text-decoration: none; cursor: not-allowed; }
     .stamp-card { display: flex; justify-content: space-between; align-items: center; background: #000; padding: 10px 15px; margin-top: 10px; border: 2px solid #555; }
     .stamp-item { font-size: 14px; color: #ffeb3b; flex: 1; text-align: center; white-space: nowrap; }
   </style>
@@ -63,7 +60,7 @@
 <body>
   <div class="container">
     <h2>💎 冒險儀表板</h2>
-    <div id="timer" style="font-size: 12px; color: #aaa; margin-bottom: 10px;">載入中...</div>
+    <div id="timer" style="font-size: 12px; color: #aaa; margin-bottom: 10px;">最後更新：載入中...</div>
 
     <div id="mainDashboard" class="dashboard" onclick="handleDashboardClick()">
       <div style="color:#fff; font-size:14px;">🔋 目前 3C 能量</div>
@@ -106,17 +103,12 @@
       <div style="cursor:pointer; color:#55efc4; font-size:14px;" onclick="toggleChest()">📦 我的寶箱 (點開相簿)</div>
       <div id="chestWrapper" class="hidden" style="background: #1e1e1e; margin-top: 5px; border-radius: 5px;">
         <div id="chestGallery"></div>
-        <div id="paginationControls" class="pagination">
-          <button id="prevPage" class="page-btn" onclick="changePage(-1)">＜ 上一頁</button>
-          <span id="pageInfo" style="font-family: monospace;">1 / 1</span>
-          <button id="nextPage" class="page-btn" onclick="changePage(1)">下一頁 ＞</button>
-        </div>
       </div>
     </div>
 
     <div id="giftArea" class="hidden" style="margin-top:20px; background:#000; border:3px dashed #ffeb3b; padding:10px;">
-      <div style="color:#ffeb3b;">🍎 發現掉落物！</div>
-      <img id="luckyGif" src="" style="width:100%; border-radius:8px;">
+      <div style="color:#ffeb3b; font-weight: bold;">🍎 發現掉落物！</div>
+      <img id="luckyGif" src="" style="width:100%; border-radius:8px; margin-top:5px;">
     </div>
 
     <div class="daily-log">
@@ -133,14 +125,14 @@
       <div class="log-title" style="color: #8bc34a;">📊 運動換算表</div>
       <table class="score-table">
         <thead>
-          <tr><th>項目</th><th>基準單位</th><th>能量</th></tr>
+          <tr><th>項目</th><th>基準</th><th>能量</th></tr>
         </thead>
         <tbody>
           <tr><td>跳繩</td><td>100 下</td><td>+ 5</td></tr>
           <tr><td>跑步</td><td>200 公尺</td><td>+ 5</td></tr>
           <tr><td>仰臥起坐</td><td>1 分鐘</td><td>+ 5</td></tr>
-          <tr style="color: #ffeb3b; background: #333;"><td>⭐ 自己起床</td><td>滿 10 次</td><td>+ 5 (額外獎勵)</td></tr>
-          <tr style="color: #ffeb3b; background: #333;"><td>❤️ GOOD</td><td>滿 10 次</td><td>+ 10 (額外獎勵)</td></tr>
+          <tr style="color: #ffeb3b;"><td>⭐ 自己起床</td><td>10 次</td><td>+ 5</td></tr>
+          <tr style="color: #ffeb3b;"><td>❤️ GOOD</td><td>10 次</td><td>+ 10</td></tr>
         </tbody>
       </table>
     </div>
@@ -152,10 +144,11 @@
       <iframe id="slotFrame" src="slot.html" width="100%" height="400px" frameborder="0" scrolling="no"></iframe>
     </div>
   </div>
+
   <div id="creeperModal" class="modal-overlay">
     <div class="modal-content">
       <span class="close-btn" onclick="closeCreeperModal()">&times;</span>
-      <iframe src="https://mistyflow66.github.io/creeper/" width="100%" height="400px" frameborder="0"></iframe>
+      <iframe id="creeperFrame" src="" width="100%" height="400px" frameborder="0"></iframe>
     </div>
   </div>
 
@@ -169,10 +162,24 @@
     };
     
     let allChestImages = [];
-    let currentPage = 1;
-    const itemsPerPage = 10;
     let dashClickCount = 0;
     let dashClickTimer = null;
+
+    function updateTimer() {
+      const now = new Date();
+      const diff = openingDate - now;
+      let countdownText = "";
+      if (diff > 0) {
+        const days = Math.floor(diff / 86400000);
+        const hours = Math.floor((diff % 86400000) / 3600000);
+        const mins = Math.floor((diff % 3600000) / 60000);
+        countdownText = `距離開學：${days}天 ${hours}時 ${mins}分`;
+      } else {
+        countdownText = "🎒 已開學，加油！";
+      }
+      const timeStr = `${now.getHours()}:${now.getMinutes().toString().padStart(2, '0')}`;
+      document.getElementById('timer').innerText = `最後更新：${now.getMonth()+1}/${now.getDate()} ${timeStr} | ${countdownText}`;
+    }
 
     function refreshData() {
       if (!userKey) return;
@@ -204,8 +211,7 @@
 
           allChestImages = data.myChest || [];
           renderChest();
-        })
-        .catch(err => console.error("抓取資料失敗:", err));
+        });
     }
 
     window.addEventListener('message', function(e) {
@@ -232,30 +238,6 @@
       Object.keys(optionsMap[user]).forEach(t => typeSelect.add(new Option(t, t)));
       document.getElementById('pitySection').classList.toggle('hidden', user === '姐');
       updateItems();
-    }
-
-    function updateTimer() {
-      const now = new Date();
-      const diff = openingDate - now;
-      let countdownText = "";
-      if (diff > 0) {
-        const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-        const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-        const mins = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-        countdownText = `距離開學：${days} 天 ${hours} 時 ${mins} 分`;
-      } else {
-        countdownText = "🎒 已開學，加油！";
-      }
-      const timeStr = `${now.getHours()}:${now.getMinutes().toString().padStart(2, '0')}`;
-      const timerEl = document.getElementById('timer');
-      if (timerEl) {
-        timerEl.innerText = `最後更新：${now.getMonth()+1}/${now.getDate()} ${timeStr} | ${countdownText}`;
-      }
-    }
-
-    function setRandomPlaceholder() {
-      const phs = ["寫點悄悄話...", "今天運動了嗎？", "(⁠◍⁠•⁠ᴗ⁠•⁠◍⁠)", "加油冒險者！"];
-      document.getElementById('noteInput').placeholder = phs[Math.floor(Math.random()*phs.length)];
     }
 
     function updateItems() {
@@ -285,29 +267,33 @@
       const user = document.querySelector('input[name="user"]:checked').value;
       const submitBtn = document.querySelector('button[onclick="submitForm()"]');
       if (user === '姐' && document.getElementById('passwordInput').value !== "3672") { alert("密碼錯誤！"); return; }
+      
       const type = document.getElementById('typeSelect').value;
       const item = document.getElementById('itemSelect').value;
       const valRaw = document.getElementById('valueInput').value.trim();
       if (!type || !item || !valRaw) { alert("內容未填齊！"); return; }
       
       submitBtn.disabled = true;
-      submitBtn.innerText = "⏳ 傳送中...";
+      submitBtn.innerText = "⏳ 存檔中...";
       const isText = (type === "規劃" || item === "其他");
       const url = `${gasUrl}?action=addData&key=${userKey}&user=${user}&category=${type}&item=${item}&value=${isText?0:valRaw}&otherNote=${encodeURIComponent(isText?valRaw:"")}&note=${encodeURIComponent(document.getElementById('noteInput').value)}`;
       
-      fetch(url).then(res => res.text()).then(giftUrl => {
-        if (user === "卉" && giftUrl && !["Error", "Success"].includes(giftUrl)) {
+      fetch(url).then(res => res.text()).then(resText => {
+        // 判斷是否為掉落物網址
+        if (user === "卉" && resText && resText.startsWith("http")) {
           document.getElementById('giftArea').classList.remove('hidden');
-          document.getElementById('luckyGif').src = giftUrl;
-          alert("發現掉落物！");
+          document.getElementById('luckyGif').src = resText;
+        } else {
+          document.getElementById('giftArea').classList.add('hidden');
         }
+        
+        // 運動抽獎機率
         if (user === "姐" || (user === "卉" && type === "運動" && Math.random() < 0.25)) {
           setTimeout(openSlotModal, 1000);
         }
         refreshData();
         document.getElementById('valueInput').value = "";
         document.getElementById('noteInput').value = "";
-        setRandomPlaceholder();
       }).finally(() => { 
         submitBtn.disabled = false; 
         submitBtn.innerText = "💾 存檔紀錄";
@@ -326,27 +312,43 @@
     function toggleChest() { document.getElementById('chestWrapper').classList.toggle('hidden'); }
     function openSlotModal() { document.getElementById('slotModal').style.display = 'flex'; }
     function closeSlotModal() { document.getElementById('slotModal').style.display = 'none'; }
+    
     function handleDashboardClick() {
       dashClickCount++;
       clearTimeout(dashClickTimer);
       dashClickTimer = setTimeout(() => { dashClickCount = 0; }, 2000);
-      if (dashClickCount === 5) { openCreeperModal(); }
-    }
-    function openCreeperModal() { document.getElementById('creeperModal').style.display = 'flex'; }
-    function closeCreeperModal() { document.getElementById('creeperModal').style.display = 'none'; }
-    function checkAccess() { 
-      if(!userKey) { 
-        userKey = prompt("請輸入通關密語："); 
-        if(userKey) { localStorage.setItem('mc_access_key', userKey); refreshData(); } 
-      } 
+      if (dashClickCount === 5) {
+        dashClickCount = 0;
+        openCreeperModal();
+      }
     }
 
-    window.onload = () => { 
-      updateTimer(); 
-      setRandomPlaceholder();
-      switchUser('卉'); 
-      setInterval(updateTimer, 60000); 
-      if(userKey) refreshData(); else checkAccess();
+    function openCreeperModal() {
+      document.getElementById('creeperFrame').src = "https://mistyflow66.github.io/creeper/";
+      document.getElementById('creeperModal').style.display = 'flex';
+    }
+
+    function closeCreeperModal() {
+      document.getElementById('creeperModal').style.display = 'none';
+      document.getElementById('creeperFrame').src = ""; // 關閉時清空，節省資源
+    }
+
+    function checkAccess() {
+      if(!userKey) {
+        userKey = prompt("通關密語：");
+        if(userKey) {
+          localStorage.setItem('mc_access_key', userKey);
+          refreshData();
+        }
+      }
+    }
+
+    window.onload = () => {
+      updateTimer(); // 立即顯示時間
+      switchUser('卉');
+      checkAccess();
+      if(userKey) refreshData();
+      setInterval(updateTimer, 60000); // 每分鐘更新
     };
   </script>
 </body>

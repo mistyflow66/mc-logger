@@ -155,7 +155,6 @@
     let currentPage = 1;
     const itemsPerPage = 10;
     
-    // 彩蛋點擊計數
     let dashClickCount = 0;
     let dashClickTimer = null;
 
@@ -172,14 +171,10 @@
       document.getElementById('timer').innerText = `更新：${now.getMonth()+1}/${now.getDate()} ${now.getHours()}:${now.getMinutes().toString().padStart(2,'0')} | 距離開學：${days} 天 ${hours} 時`;
     }
 
-    // 彩蛋觸發邏輯
     function handleDashboardClick() {
       dashClickCount++;
       clearTimeout(dashClickTimer);
-      
-      // 如果 2 秒內沒繼續點，歸零
       dashClickTimer = setTimeout(() => { dashClickCount = 0; }, 2000);
-      
       if (dashClickCount === 5) {
         dashClickCount = 0;
         openCreeperModal();
@@ -187,7 +182,11 @@
     }
 
     function openCreeperModal() {
-      document.getElementById('creeperModal').style.display = 'flex';
+      const modal = document.getElementById('creeperModal');
+      const iframe = modal.querySelector('iframe');
+      // 強制刷新的關鍵：重新賦予 src 網址
+      iframe.src = "https://mistyflow66.github.io/creeper/";
+      modal.style.display = 'flex';
     }
 
     function closeCreeperModal() {
@@ -303,9 +302,15 @@
           alert("存檔成功！");
         }
         
-        // 拉霸機觸發：卉存檔 20%
-        if (user === "卉" && Math.random() < 0.2) {
+        // --- 拉霸機邏輯修正 ---
+        if (user === "姐") {
+          // 姐存檔：每次都彈出
           setTimeout(openSlotModal, 1000);
+        } else if (user === "卉" && type === "運動") {
+          // 卉存檔：且類別是運動，才有 20% 機率
+          if (Math.random() < 0.2) {
+            setTimeout(openSlotModal, 1000);
+          }
         }
 
         clearFormAfterSubmit();
@@ -328,12 +333,6 @@
     function toggleChest() {
       const wrapper = document.getElementById('chestWrapper');
       wrapper.classList.toggle('hidden');
-      const controls = document.getElementById('paginationControls');
-      if (allChestImages.length <= itemsPerPage) {
-        controls.style.visibility = 'hidden';
-      } else {
-        controls.style.visibility = 'visible';
-      }
     }
 
     function openSlotModal() {
@@ -349,11 +348,9 @@
       const now = new Date();
       const timeStr = `${now.getHours()}:${now.getMinutes().toString().padStart(2,'0')}`;
       let logMsg = "";
-
       if (e.data === 'win') logMsg = `${timeStr} 抽獎：完美合成 ★`;
       if (e.data === 'near') logMsg = `${timeStr} 抽獎：還差一點點`;
       if (e.data === 'lose') logMsg = `${timeStr} 抽獎：銘謝惠顧`;
-
       if (logMsg) {
         const todayList = document.getElementById('todayList');
         const currentLogs = todayList.innerHTML === "今天還沒有紀錄" ? "" : todayList.innerHTML;
@@ -371,3 +368,4 @@
   </script>
 </body>
 </html>
+

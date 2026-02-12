@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html>
 <head>
@@ -287,7 +286,7 @@
       renderChest();
     }
 
-         function submitForm() {
+    function submitForm() {
       if (!userKey) { checkAccess(); return; }
       const user = document.querySelector('input[name="user"]:checked').value;
       const submitBtn = document.querySelector('button[onclick="submitForm()"]');
@@ -315,7 +314,6 @@
       const otherNote = isTextMode ? valRaw : "";
       const url = `${gasUrl}?action=addData&key=${userKey}&user=${user}&category=${type}&item=${item}&value=${finalVal}&otherNote=${encodeURIComponent(otherNote)}&note=${encodeURIComponent(note)}`;
       
-      // 清除舊的掉落物顯示
       document.getElementById('giftArea').classList.add('hidden');
       document.getElementById('luckyGif').src = "";
 
@@ -323,7 +321,6 @@
         const cleanUrl = giftUrl.replace(/"/g, "").trim(); 
         
         let hasSlot = false;
-        // 判斷是否觸發 Slot
         if (user === "姐") {
           hasSlot = true;
         } else if (user === "卉" && type === "運動") {
@@ -332,7 +329,6 @@
           }
         }
 
-        // 擇一邏輯：優先 Slot，否則才看有無寶箱
         if (hasSlot) {
           alert("🍎 發現掉落物！");
           setTimeout(openSlotModal, 500);
@@ -340,28 +336,6 @@
           alert("🍎 發現掉落物！");
           document.getElementById('giftArea').classList.remove('hidden');
           document.getElementById('luckyGif').src = cleanUrl;
-        }
-        // 若兩者皆無，則不顯示任何 alert
-
-        clearFormAfterSubmit();
-        refreshData();
-      }).catch(err => {
-        console.error("提交失敗:", err);
-        alert("連線失敗，請稍後再試");
-      }).finally(() => {
-        submitBtn.disabled = false;
-        submitBtn.innerText = "💾 存檔紀錄";
-        submitBtn.style.background = "var(--mc-green)";
-      });
-    }
-        
-        // 抽獎邏輯維持不變
-        if (user === "姐") {
-          setTimeout(openSlotModal, 1000);
-        } else if (user === "卉" && type === "運動") {
-          if (Math.random() < 0.5) {
-            setTimeout(openSlotModal, 1000);
-          }
         }
 
         clearFormAfterSubmit();

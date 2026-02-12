@@ -345,8 +345,13 @@
     }
 
     window.addEventListener('message', function(e) {
-      const now = new Date();
-      const timeStr = `${now.getHours()}:${now.getMinutes().toString().padStart(2,'0')}`;
+  if (e.data === 'closeModal') {
+    closeSlotModal();
+    return;
+  }
+  // ... 原本處理 win/near/lose 的 log 邏輯 ...
+}, false);
+
       let logMsg = "";
       if (e.data === 'win') logMsg = `${timeStr} 抽獎：完美合成 ★`;
       if (e.data === 'near') logMsg = `${timeStr} 抽獎：還差一點點`;

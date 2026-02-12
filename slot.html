@@ -196,32 +196,43 @@
     }
 
     function checkWin(res) {
-        isSpinning = false;
-        document.getElementById('spinBtn').disabled = false;
-        const status = document.getElementById('status');
+    isSpinning = false;
+    const status = document.getElementById('status');
+    const spinBtn = document.getElementById('spinBtn'); // 取得按鈕
 
-        if (res[0] === res[1] && res[1] === res[2]) {
-            status.textContent = "★ 完美的合成！ ★";
-            status.style.color = "var(--mc-green)";
-        } else if (res[0] === res[1] || res[1] === res[2] || res[0] === res[2]) {
-            status.textContent = "還差一點點！";
-            status.style.color = "var(--mc-orange)";
-        } else {
-            status.textContent = "挖掘失敗，再試一次";
-            status.style.color = "#333";
-        }
+    let resultType = ""; // 用來傳送給父分頁的訊息
+
+    if (res[0] === res[1] && res[1] === res[2]) {
+        status.textContent = "★ 完美的合成！ ★";
+        status.style.color = "var(--mc-green)";
+        resultType = "win";
+    } else if (res[0] === res[1] || res[1] === res[2] || res[0] === res[2]) {
+        status.textContent = "還差一點點！";
+        status.style.color = "var(--mc-orange)";
+        resultType = "near";
+    } else {
+        status.textContent = "挖掘失敗，再試一次";
+        status.style.color = "#333";
+        resultType = "lose";
     }
 
-// 判定結束後，如果是被嵌入在 iframe 中
-if (window.self !== window.top) {
-    // 鎖定按鈕，不讓使用者再按第二次
-    document.getElementById('spinBtn').disabled = true;
-    document.getElementById('spinBtn').textContent = "本次機會已用完";
-    
-    // (可選) 3秒後自動關閉視窗，讓流程更順暢
-    setTimeout(() => {
-        window.parent.postMessage('closeModal', '*');
-    }, 3000);
+    // --- 修正後的邏輯：抽完才鎖定並通知 ---
+    if (window.self !== window.top) {
+        // 1. 通知主頁面抽獎結果 (這會觸發主頁面的日誌紀錄)
+        window.parent.postMessage(resultType, '*');
+
+        // 2. 抽完後鎖定按鈕，防止重複抽
+        spinBtn.disabled = true;
+        spinBtn.textContent = "本次機會已用完";
+
+        // 3. 3秒後自動關閉視窗 (配合主頁面的 closeSlotModal 函數)
+        setTimeout(() => {
+            window.parent.postMessage('closeModal', '*');
+        }, 3000);
+    } else {
+        // 如果是獨立開啟網頁，就不要鎖死，讓測試方便
+        spinBtn.disabled = false;
+    }
 }
 
 </script>

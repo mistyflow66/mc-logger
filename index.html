@@ -4,9 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="icon" type="image/png" href="https://meee.com.tw/x9oTG9x.png">
-
   <link rel="apple-touch-icon" href="https://meee.com.tw/x9oTG9x.png">
-
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 
@@ -16,7 +14,10 @@
     body { font-family: 'Segoe UI', sans-serif; background: #2c2c2c; color: white; padding: 15px; text-align: center; margin:0; }
     .container { background: #3c3c3c; border: 4px solid #000; padding: 20px; border-radius: 4px; max-width: 400px; margin: auto; }
     h2 { color: #8bc34a; text-shadow: 2px 2px #000; margin: 10px 0; }
-    .dashboard { background: #000; border: 4px solid #555; padding: 15px; margin-bottom: 15px; }
+    
+    /* 儀表板黑框 */
+    .dashboard { background: #000; border: 4px solid #555; padding: 15px; margin-bottom: 15px; cursor: default; }
+    
     .balance-value { color: #00e676; font-size: 32px; font-weight: bold; font-family: 'Courier New', monospace; }
     .user-select { background: #4e4e4e; border: 2px solid #000; padding: 10px; margin-bottom: 15px; display: flex; justify-content: space-around; align-items: center; }
     .radio-group { cursor: pointer; display: flex; align-items: center; }
@@ -28,52 +29,23 @@
     .score-table td, .score-table th { border: 1px solid #555; padding: 6px; text-align: center; }
     .score-table th { background: #795548; }
     .hidden { display: none !important; }
-    
-    /* 寶箱樣式優化 */
-        #chestGallery { 
-      display: grid; 
-      /* 固定 5 欄，每欄平分寬度 */
-      grid-template-columns: repeat(5, 1fr); 
-      gap: 8px; 
-      background: #1e1e1e; 
-      padding: 10px; 
-      margin-top: 5px; 
-      border-radius: 5px; 
-    }
-    .chest-img { 
-      width: 100%; /* 寬度自動填滿格子 */
-      aspect-ratio: 1 / 1; /* 強制圖片變成正方形 */
-      object-fit: cover; 
-      border: 2px solid #555; 
-      border-radius: 4px; 
-    }
 
-        /* 輕量化分頁控制（在相簿框內） */
-    .pagination { 
-      display: flex; 
-      justify-content: space-between; 
-      align-items: center; 
-      padding: 10px 5px 5px 5px; 
-      font-size: 13px;
-      color: #aaa;
+    /* 通用彈出視窗樣式 */
+    .modal-overlay {
+      display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,0.85); z-index: 10000; justify-content: center; align-items: center;
     }
-    .page-btn { 
-      background: none; 
-      border: none; 
-      color: #55efc4; 
-      text-decoration: underline; 
-      padding: 5px; 
-      font-size: 13px; 
-      width: auto; /* 取消原本 100% 寬度 */
-      box-shadow: none; /* 取消原本陰影 */
-      cursor: pointer;
-    }
-    .page-btn:disabled { 
-      color: #555; 
-      text-decoration: none; 
-      cursor: not-allowed; 
-    }
+    .modal-content { position: relative; width: 95vw; max-width: 380px; }
+    .close-btn { position: absolute; top: -45px; right: 0; color: white; font-size: 35px; cursor: pointer; padding: 5px; line-height: 1; }
 
+    #chestGallery { 
+      display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; 
+      background: #1e1e1e; padding: 10px; margin-top: 5px; border-radius: 5px; 
+    }
+    .chest-img { width: 100%; aspect-ratio: 1 / 1; object-fit: cover; border: 2px solid #555; border-radius: 4px; }
+    .pagination { display: flex; justify-content: space-between; align-items: center; padding: 10px 5px 5px 5px; font-size: 13px; color: #aaa; }
+    .page-btn { background: none; border: none; color: #55efc4; text-decoration: underline; padding: 5px; font-size: 13px; width: auto; box-shadow: none; cursor: pointer; }
+    .page-btn:disabled { color: #555; text-decoration: none; cursor: not-allowed; }
     .stamp-card { display: flex; justify-content: space-between; align-items: center; background: #000; padding: 10px 15px; margin-top: 10px; border: 2px solid #555; }
     .stamp-item { font-size: 14px; color: #ffeb3b; flex: 1; text-align: center; white-space: nowrap; }
   </style>
@@ -83,7 +55,7 @@
     <h2>💎 冒險儀表板</h2>
     <div id="timer" style="font-size: 12px; color: #aaa; margin-bottom: 10px;">載入中...</div>
 
-    <div class="dashboard">
+    <div class="dashboard" onclick="handleDashboardClick()">
       <div style="color:#fff; font-size:14px;">🔋 目前 3C 能量</div>
       <div class="balance-value" id="balanceDisplay">0</div>
       <div class="stamp-card">
@@ -112,12 +84,10 @@
       <button type="button" onclick="submitForm()">💾 存檔紀錄</button>
     </form>
 
-      <div id="chestSection" style="margin-top:10px; text-align:left;">
+    <div id="chestSection" style="margin-top:10px; text-align:left;">
       <div style="cursor:pointer; color:#55efc4; font-size:14px;" onclick="toggleChest()">📦 我的寶箱 (點開相簿)</div>
-      
       <div id="chestWrapper" class="hidden" style="background: #1e1e1e; margin-top: 5px; border-radius: 5px;">
         <div id="chestGallery"></div>
-        
         <div id="paginationControls" class="pagination">
           <button id="prevPage" class="page-btn" onclick="changePage(-1)">＜ 上一頁</button>
           <span id="pageInfo" style="font-family: monospace;">1 / 1</span>
@@ -130,7 +100,7 @@
       <div style="color:#ffeb3b;">🍎 發現掉落物！</div>
       <img id="luckyGif" src="" style="width:100%; border-radius:8px;">
     </div>
-    
+
     <div class="daily-log">
       <div class="log-title">📅 今天的日誌</div>
       <div id="todayList" style="color:#8bc34a; font-size: 14px;"></div>
@@ -158,6 +128,20 @@
     </div>
   </div>
 
+  <div id="slotModal" class="modal-overlay">
+    <div class="modal-content">
+      <span class="close-btn" onclick="closeSlotModal()">&times;</span>
+      <iframe id="slotFrame" src="slot.html" width="100%" height="400px" frameborder="0" scrolling="no"></iframe>
+    </div>
+  </div>
+
+  <div id="creeperModal" class="modal-overlay">
+    <div class="modal-content">
+      <span class="close-btn" onclick="closeCreeperModal()">&times;</span>
+      <iframe src="https://mistyflow66.github.io/creeper/" width="100%" height="400px" frameborder="0"></iframe>
+    </div>
+  </div>
+
   <script>
     const gasUrl = "https://script.google.com/macros/s/AKfycby8MaeORmgHynbc4qTnjUUCyn12NWZYJP6HEhCZ1wEsXOX3fnTlQT-LP9l8FRNQf4cG/exec"; 
     const openingDate = new Date("2026-02-23");
@@ -167,11 +151,13 @@
     };
 
     const randomPlaceholders = ["寫點悄悄話...", "還在ㄊㄟ", "現在的心情...", "(⁠・⁠∀⁠・⁠)", "(⁠ㆁ⁠ω⁠ㆁ⁠)", "(⁠◍⁠•⁠ᴗ⁠•⁠◍⁠)", "今天運動了嗎？"];
-    
-    // 全域變數存儲相簿資料
     let allChestImages = [];
     let currentPage = 1;
     const itemsPerPage = 10;
+    
+    // 彩蛋點擊計數
+    let dashClickCount = 0;
+    let dashClickTimer = null;
 
     function setRandomPlaceholder() {
       const randomIndex = Math.floor(Math.random() * randomPlaceholders.length);
@@ -184,6 +170,28 @@
       const days = Math.floor(diff / (1000 * 60 * 60 * 24));
       const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
       document.getElementById('timer').innerText = `更新：${now.getMonth()+1}/${now.getDate()} ${now.getHours()}:${now.getMinutes().toString().padStart(2,'0')} | 距離開學：${days} 天 ${hours} 時`;
+    }
+
+    // 彩蛋觸發邏輯
+    function handleDashboardClick() {
+      dashClickCount++;
+      clearTimeout(dashClickTimer);
+      
+      // 如果 2 秒內沒繼續點，歸零
+      dashClickTimer = setTimeout(() => { dashClickCount = 0; }, 2000);
+      
+      if (dashClickCount === 5) {
+        dashClickCount = 0;
+        openCreeperModal();
+      }
+    }
+
+    function openCreeperModal() {
+      document.getElementById('creeperModal').style.display = 'flex';
+    }
+
+    function closeCreeperModal() {
+      document.getElementById('creeperModal').style.display = 'none';
     }
 
     function switchUser(user) {
@@ -227,35 +235,25 @@
           document.getElementById('wakeupCount').innerText = data.wakeup || 0;
           document.getElementById('goodCount').innerText = data.good || 0;
           document.getElementById('noteList').innerHTML = (data.notes && data.notes.length > 0) ? data.notes.join("<br>") : "目前沒有留言";
-          
-          // 儲存並渲染寶箱
           allChestImages = data.myChest || [];
           renderChest();
         })
         .catch(err => console.error("抓取資料失敗:", err));
     }
 
-    // 分頁渲染邏輯
     function renderChest() {
       const gallery = document.getElementById('chestGallery');
       const controls = document.getElementById('paginationControls');
-      
       if (allChestImages.length === 0) {
         gallery.innerHTML = "<div style='color:#777;font-size:12px;'>寶箱還是空的...</div>";
         controls.classList.add('hidden');
         return;
       }
-
       const totalPages = Math.ceil(allChestImages.length / itemsPerPage);
       if (currentPage > totalPages) currentPage = totalPages;
-
-      // 切割當前頁面的圖片
       const startIndex = (currentPage - 1) * itemsPerPage;
       const pageImages = allChestImages.slice(startIndex, startIndex + itemsPerPage);
-
       gallery.innerHTML = pageImages.map(url => `<img src="${url}" class="chest-img">`).join("");
-
-      // 只有多於 10 張才顯示分頁按鈕
       if (allChestImages.length > itemsPerPage) {
         controls.classList.remove('hidden');
         document.getElementById('pageInfo').innerText = `${currentPage} / ${totalPages}`;
@@ -295,6 +293,7 @@
       const finalVal = isTextMode ? 0 : valRaw;
       const otherNote = isTextMode ? valRaw : "";
       const url = `${gasUrl}?action=addData&user=${user}&category=${type}&item=${item}&value=${finalVal}&otherNote=${encodeURIComponent(otherNote)}&note=${encodeURIComponent(note)}`;
+      
       fetch(url).then(res => res.text()).then(giftUrl => {
         if (user === "卉" && giftUrl && !["Error", "Success"].includes(giftUrl)) {
           document.getElementById('giftArea').classList.remove('hidden');
@@ -303,6 +302,12 @@
         } else {
           alert("存檔成功！");
         }
+        
+        // 拉霸機觸發：卉存檔 20%
+        if (user === "卉" && Math.random() < 0.2) {
+          setTimeout(openSlotModal, 1000);
+        }
+
         clearFormAfterSubmit();
         refreshData();
       }).finally(() => {
@@ -320,20 +325,42 @@
       setRandomPlaceholder(); 
     }
 
-        function toggleChest() {
+    function toggleChest() {
       const wrapper = document.getElementById('chestWrapper');
       wrapper.classList.toggle('hidden');
-      
-      // 打開時，如果圖片不足 10 張，隱藏底部的切換文字
       const controls = document.getElementById('paginationControls');
       if (allChestImages.length <= itemsPerPage) {
-        controls.style.visibility = 'hidden'; // 使用 visibility 保持高度，排版才不會跳動
+        controls.style.visibility = 'hidden';
       } else {
         controls.style.visibility = 'visible';
       }
     }
 
-    
+    function openSlotModal() {
+      document.getElementById('slotModal').style.display = 'flex';
+      document.getElementById('slotFrame').contentWindow.location.reload();
+    }
+
+    function closeSlotModal() {
+      document.getElementById('slotModal').style.display = 'none';
+    }
+
+    window.addEventListener('message', function(e) {
+      const now = new Date();
+      const timeStr = `${now.getHours()}:${now.getMinutes().toString().padStart(2,'0')}`;
+      let logMsg = "";
+
+      if (e.data === 'win') logMsg = `${timeStr} 抽獎：完美合成 ★`;
+      if (e.data === 'near') logMsg = `${timeStr} 抽獎：還差一點點`;
+      if (e.data === 'lose') logMsg = `${timeStr} 抽獎：銘謝惠顧`;
+
+      if (logMsg) {
+        const todayList = document.getElementById('todayList');
+        const currentLogs = todayList.innerHTML === "今天還沒有紀錄" ? "" : todayList.innerHTML;
+        todayList.innerHTML = `<span style="color:#ffeb3b;">${logMsg}</span><br>${currentLogs}`;
+      }
+    }, false);
+
     window.onload = () => { 
       switchUser('卉'); 
       refreshData(); 

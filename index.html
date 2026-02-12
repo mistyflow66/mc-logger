@@ -287,7 +287,7 @@
       renderChest();
     }
 
-        function submitForm() {
+         function submitForm() {
       if (!userKey) { checkAccess(); return; }
       const user = document.querySelector('input[name="user"]:checked').value;
       const submitBtn = document.querySelector('button[onclick="submitForm()"]');
@@ -298,10 +298,10 @@
       const item = document.getElementById('itemSelect').value;
       const valRaw = document.getElementById('valueInput').value.trim();
       const note = document.getElementById('noteInput').value.trim(); 
-      if (!type || !item) { alert("請選擇類別和項目！"); return; }
+      if (!type || !item) { alert("請選擇類別和項目"); return; }
       const isTextMode = (type === "規劃" || item === "其他");
       if (!valRaw) {
-        alert(isTextMode ? "請輸入『做了什麼』！" : "請輸入『數量數字』！"); return;
+        alert(isTextMode ? "請輸入『做了什麼』" : "請輸入『數量數字』"); return;
       }
       if (!isTextMode && isNaN(valRaw)) {
         alert("這項請輸入『數字』，不要輸入文字！"); return;
@@ -315,21 +315,45 @@
       const otherNote = isTextMode ? valRaw : "";
       const url = `${gasUrl}?action=addData&key=${userKey}&user=${user}&category=${type}&item=${item}&value=${finalVal}&otherNote=${encodeURIComponent(otherNote)}&note=${encodeURIComponent(note)}`;
       
-      // 先隱藏掉落物區域，避免上次的結果干擾
+      // 清除舊的掉落物顯示
       document.getElementById('giftArea').classList.add('hidden');
       document.getElementById('luckyGif').src = "";
 
       fetch(url).then(res => res.text()).then(giftUrl => {
-        // 核心邏輯：判斷回傳內容是否為網址
-        const cleanUrl = giftUrl.replace(/"/g, "").trim(); // 去掉可能的引號
+        const cleanUrl = giftUrl.replace(/"/g, "").trim(); 
         
-        if (user === "卉" && cleanUrl && cleanUrl.startsWith("http")) {
+        let hasSlot = false;
+        // 判斷是否觸發 Slot
+        if (user === "姐") {
+          hasSlot = true;
+        } else if (user === "卉" && type === "運動") {
+          if (Math.random() < 0.5) {
+            hasSlot = true;
+          }
+        }
+
+        // 擇一邏輯：優先 Slot，否則才看有無寶箱
+        if (hasSlot) {
+          alert("🍎 發現掉落物！");
+          setTimeout(openSlotModal, 500);
+        } else if (user === "卉" && cleanUrl && cleanUrl.startsWith("http")) {
+          alert("🍎 發現掉落物！");
           document.getElementById('giftArea').classList.remove('hidden');
           document.getElementById('luckyGif').src = cleanUrl;
-          alert("🍎 發現掉落物！");
-        } else {
-          alert("💾 存檔成功！");
         }
+        // 若兩者皆無，則不顯示任何 alert
+
+        clearFormAfterSubmit();
+        refreshData();
+      }).catch(err => {
+        console.error("提交失敗:", err);
+        alert("連線失敗，請稍後再試");
+      }).finally(() => {
+        submitBtn.disabled = false;
+        submitBtn.innerText = "💾 存檔紀錄";
+        submitBtn.style.background = "var(--mc-green)";
+      });
+    }
         
         // 抽獎邏輯維持不變
         if (user === "姐") {

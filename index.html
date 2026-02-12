@@ -15,7 +15,6 @@
     .container { background: #3c3c3c; border: 4px solid #000; padding: 20px; border-radius: 4px; max-width: 400px; margin: auto; }
     h2 { color: #8bc34a; text-shadow: 2px 2px #000; margin: 10px 0; }
     
-    /* 儀表板與爆閃效果 */
     .dashboard { background: #000; border: 4px solid #555; padding: 15px; margin-bottom: 15px; cursor: default; transition: 0.3s; position: relative; overflow: hidden; }
     .jackpot-active { border-color: var(--gold); box-shadow: 0 0 20px var(--gold); animation: flash-gold 0.8s infinite; }
     
@@ -27,7 +26,6 @@
 
     .balance-value { color: #00e676; font-size: 32px; font-weight: bold; font-family: 'Courier New', monospace; }
     
-    /* 保底進度條 */
     .pity-bar-container { background: #222; border: 1px solid #555; height: 10px; margin: 10px 0 5px 0; border-radius: 5px; position: relative; }
     .pity-bar-fill { background: linear-gradient(90deg, #f093fb 0%, #f5576c 100%); height: 100%; width: 0%; transition: width 0.5s ease-in-out; border-radius: 5px; }
     .pity-text { font-size: 11px; color: #ff7675; text-transform: uppercase; letter-spacing: 1px; }
@@ -148,8 +146,6 @@
     </div>
   </div>
 
-    </div>
-
   <div id="slotModal" class="modal-overlay">
     <div class="modal-content">
       <span class="close-btn" onclick="closeSlotModal()">&times;</span>
@@ -166,7 +162,7 @@
   <script>
     let userKey = localStorage.getItem('mc_access_key') || "";
     const gasUrl = "https://script.google.com/macros/s/AKfycby8MaeORmgHynbc4qTnjUUCyn12NWZYJP6HEhCZ1wEsXOX3fnTlQT-LP9l8FRNQf4cG/exec"; 
-    const openingDate = new Date("2026-02-23");
+    const openingDate = new Date("2026-02-23T08:00:00");
     const optionsMap = {
       "卉": { "運動": ["跳繩", "跑步", "仰臥起坐"], "3C": ["看電視", "用手機", "玩電腦"], "規劃": ["閱讀", "做小書", "練習英文", "其他"] },
       "姐": { "運動": ["跳繩", "跑步", "仰臥起坐"], "3C": ["看電視", "用手機", "玩電腦"], "獎勵": ["自己起床", "GOOD", "加分", "扣分"] }
@@ -186,28 +182,22 @@
           if (data.error) {
             localStorage.removeItem('mc_access_key');
             userKey = "";
+            checkAccess();
             return;
           }
-          // 更新基礎數據
           document.getElementById('balanceDisplay').innerText = data.total3C || 0;
           document.getElementById('todayList').innerHTML = (data.todayLogs && data.todayLogs.length > 0) ? data.todayLogs.join("<br>") : "今天還沒有紀錄";
           document.getElementById('wakeupCount').innerText = data.wakeup || 0;
           document.getElementById('goodCount').innerText = data.good || 0;
           document.getElementById('noteList').innerHTML = (data.notes && data.notes.length > 0) ? data.notes.join("<br>") : "目前沒有留言";
           
-          // --- 保底進度邏輯 ---
           const pity = data.pityProgress || 0;
           document.getElementById('pityValue').innerText = pity;
           document.getElementById('pityBar').style.width = (pity / 5 * 100) + "%";
           
-          // --- 觸發爆閃動畫 ---
           const dash = document.getElementById('mainDashboard');
           if (data.isJackpotReady) {
             dash.classList.add('jackpot-active');
-            // 如果是卉，可以彈出提示
-            if (document.querySelector('input[name="user"]:checked').value === "卉") {
-              console.log("JACKPOT READY!");
-            }
           } else {
             dash.classList.remove('jackpot-active');
           }
@@ -218,102 +208,56 @@
         .catch(err => console.error("抓取資料失敗:", err));
     }
 
-    // 當「抽獎失敗」時的處理 (在 window message 監聽裡)
     window.addEventListener('message', function(e) {
       if (e.data === 'closeModal') { closeSlotModal(); return; }
       const currentUser = document.querySelector('input[name="user"]:checked').value;
-      const now = new Date();
-      const timeStr = `${now.getHours()}:${now.getMinutes().toString().padStart(2,'0')}`;
-      
       let itemType = "";
       let bonusValue = 0;
-      let bonusColor = "";
 
-      if (e.data === 'win') {
-        itemType = "抽獎";
-        bonusValue = 1;
-        bonusColor = "#FFD700";
-      } else if (e.data === 'near') {
-        itemType = "抽獎";
-        bonusValue = 0.5;
-        bonusColor = "#FFA500";
-      } else if (e.data === 'lose') {
-        itemType = "抽獎失敗"; // 這會增加 loseCount
-        bonusValue = 1; // 增加 1 次失敗紀錄
-        bonusColor = "#dfe6e9";
-      }
+      if (e.data === 'win') { itemType = "抽獎"; bonusValue = 1; } 
+      else if (e.data === 'near') { itemType = "抽獎"; bonusValue = 0.5; } 
+      else if (e.data === 'lose') { itemType = "抽獎失敗"; bonusValue = 1; }
 
       if (itemType && currentUser === "卉") {
         const note = encodeURIComponent(`自動紀錄：${e.data}`);
         const saveUrl = `${gasUrl}?action=addData&key=${userKey}&user=${currentUser}&category=獎勵&item=${itemType}&value=${bonusValue}&otherNote=&note=${note}`;
-        
-        fetch(saveUrl).then(() => {
-          // 如果剛剛是累積滿 5 次，現在重新刷新會觸發爆閃
-          refreshData(); 
-        });
+        fetch(saveUrl).then(() => refreshData());
       }
     }, false);
 
-    // 其餘原本的 function (submitForm, switchUser, renderChest...) 維持原樣即可
     function switchUser(user) {
       document.getElementById('passwordArea').classList.toggle('hidden', user !== '姐');
       const typeSelect = document.getElementById('typeSelect');
       typeSelect.innerHTML = '<option value="">-- 選擇類別 --</option>';
       Object.keys(optionsMap[user]).forEach(t => typeSelect.add(new Option(t, t)));
-      
-      // 姐不顯示保底進度
       document.getElementById('pitySection').classList.toggle('hidden', user === '姐');
       updateItems();
     }
-    
-    // ... (以下保留你原本的 updateTimer, submitForm 等剩餘代碼)
-   // --- 1. 定義常數與計時器 (放在最上面) ---
-const openingDate = new Date("2026-02-23T08:00:00");
 
-function updateTimer() {
-  const now = new Date();
-  const diff = openingDate - now;
-  
-  // 計算倒數
-  let countdownText = "";
-  if (diff > 0) {
-    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-    const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-    const mins = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-    countdownText = `距離開學：${days} 天 ${hours} 時 ${mins} 分`;
-  } else {
-    countdownText = "🎒 已開學，加油！";
-  }
+    function updateTimer() {
+      const now = new Date();
+      const diff = openingDate - now;
+      let countdownText = "";
+      if (diff > 0) {
+        const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+        const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+        const mins = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+        countdownText = `距離開學：${days} 天 ${hours} 時 ${mins} 分`;
+      } else {
+        countdownText = "🎒 已開學，加油！";
+      }
+      const timeStr = `${now.getHours()}:${now.getMinutes().toString().padStart(2, '0')}`;
+      const timerEl = document.getElementById('timer');
+      if (timerEl) {
+        timerEl.innerText = `最後更新：${now.getMonth()+1}/${now.getDate()} ${timeStr} | ${countdownText}`;
+      }
+    }
 
-  // 格式化目前更新時間
-  const month = now.getMonth() + 1;
-  const date = now.getDate();
-  const timeStr = `${now.getHours()}:${now.getMinutes().toString().padStart(2, '0')}`;
-  
-  // 立即更新到 DOM
-  const timerEl = document.getElementById('timer');
-  if (timerEl) {
-    timerEl.innerText = `最後更新：${month}/${date} ${timeStr} | ${countdownText}`;
-  }
-}
+    function setRandomPlaceholder() {
+      const phs = ["寫點悄悄話...", "今天運動了嗎？", "(⁠◍⁠•⁠ᴗ⁠•⁠◍⁠)", "加油冒險者！"];
+      document.getElementById('noteInput').placeholder = phs[Math.floor(Math.random()*phs.length)];
+    }
 
-// --- 2. 修改 window.onload (確保優先執行) ---
-window.onload = () => {
-  // A. 優先跑不需要網路的 UI 邏輯
-  updateTimer(); 
-  setRandomPlaceholder();
-  switchUser('卉'); 
-
-  // B. 設定每秒/分自動更新 (讓倒數看起來在動)
-  setInterval(updateTimer, 60000); 
-
-  // C. 最後才跑需要讀取試算表的網路動作
-  if(userKey) {
-    refreshData();
-  } else {
-    checkAccess();
-  }
-};
     function updateItems() {
       const user = document.querySelector('input[name="user"]:checked').value;
       const type = document.getElementById('typeSelect').value;
@@ -322,7 +266,9 @@ window.onload = () => {
       if (optionsMap[user][type]) {
         optionsMap[user][type].forEach(i => itemSelect.add(new Option(i, i)));
       }
+      checkValueType();
     }
+
     function checkValueType() {
       const type = document.getElementById('typeSelect').value;
       const item = document.getElementById('itemSelect').value;
@@ -333,8 +279,9 @@ window.onload = () => {
         valInput.type = "number"; valInput.placeholder = "輸入數量(數字)";
       }
     }
+
     function submitForm() {
-      if (!userKey) return;
+      if (!userKey) { checkAccess(); return; }
       const user = document.querySelector('input[name="user"]:checked').value;
       const submitBtn = document.querySelector('button[onclick="submitForm()"]');
       if (user === '姐' && document.getElementById('passwordInput').value !== "3672") { alert("密碼錯誤！"); return; }
@@ -344,6 +291,7 @@ window.onload = () => {
       if (!type || !item || !valRaw) { alert("內容未填齊！"); return; }
       
       submitBtn.disabled = true;
+      submitBtn.innerText = "⏳ 傳送中...";
       const isText = (type === "規劃" || item === "其他");
       const url = `${gasUrl}?action=addData&key=${userKey}&user=${user}&category=${type}&item=${item}&value=${isText?0:valRaw}&otherNote=${encodeURIComponent(isText?valRaw:"")}&note=${encodeURIComponent(document.getElementById('noteInput').value)}`;
       
@@ -351,6 +299,7 @@ window.onload = () => {
         if (user === "卉" && giftUrl && !["Error", "Success"].includes(giftUrl)) {
           document.getElementById('giftArea').classList.remove('hidden');
           document.getElementById('luckyGif').src = giftUrl;
+          alert("發現掉落物！");
         }
         if (user === "姐" || (user === "卉" && type === "運動" && Math.random() < 0.25)) {
           setTimeout(openSlotModal, 1000);
@@ -358,8 +307,13 @@ window.onload = () => {
         refreshData();
         document.getElementById('valueInput').value = "";
         document.getElementById('noteInput').value = "";
-      }).finally(() => { submitBtn.disabled = false; });
+        setRandomPlaceholder();
+      }).finally(() => { 
+        submitBtn.disabled = false; 
+        submitBtn.innerText = "💾 存檔紀錄";
+      });
     }
+
     function renderChest() {
       const gallery = document.getElementById('chestGallery');
       if (allChestImages.length === 0) {
@@ -368,6 +322,7 @@ window.onload = () => {
       }
       gallery.innerHTML = allChestImages.slice(-10).reverse().map(url => `<img src="${url}" class="chest-img">`).join("");
     }
+
     function toggleChest() { document.getElementById('chestWrapper').classList.toggle('hidden'); }
     function openSlotModal() { document.getElementById('slotModal').style.display = 'flex'; }
     function closeSlotModal() { document.getElementById('slotModal').style.display = 'none'; }
@@ -379,9 +334,20 @@ window.onload = () => {
     }
     function openCreeperModal() { document.getElementById('creeperModal').style.display = 'flex'; }
     function closeCreeperModal() { document.getElementById('creeperModal').style.display = 'none'; }
-    function checkAccess() { if(!userKey) { userKey = prompt("密語："); if(userKey) { localStorage.setItem('mc_access_key', userKey); refreshData(); } } }
+    function checkAccess() { 
+      if(!userKey) { 
+        userKey = prompt("請輸入通關密語："); 
+        if(userKey) { localStorage.setItem('mc_access_key', userKey); refreshData(); } 
+      } 
+    }
 
-    window.onload = () => { switchUser('卉'); checkAccess(); refreshData(); setInterval(updateTimer, 60000); };
+    window.onload = () => { 
+      updateTimer(); 
+      setRandomPlaceholder();
+      switchUser('卉'); 
+      setInterval(updateTimer, 60000); 
+      if(userKey) refreshData(); else checkAccess();
+    };
   </script>
 </body>
 </html>

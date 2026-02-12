@@ -307,8 +307,8 @@
           // 姐存檔：每次都彈出
           setTimeout(openSlotModal, 1000);
         } else if (user === "卉" && type === "運動") {
-          // 卉存檔：且類別是運動，才有 20% 機率
-          if (Math.random() < 0.2) {
+          // 卉存檔：且類別是運動，才有 25% 機率
+          if (Math.random() < 0.25) {
             setTimeout(openSlotModal, 1000);
           }
         }
@@ -344,25 +344,52 @@
       document.getElementById('slotModal').style.display = 'none';
     }
 
-        window.addEventListener('message', function(e) {
+            window.addEventListener('message', function(e) {
       if (e.data === 'closeModal') {
         closeSlotModal();
         return;
       }
-      
-      // 修復：正確定義時間與訊息處理邏輯
+
+      const currentUser = document.querySelector('input[name="user"]:checked').value;
       const now = new Date();
       const timeStr = `${now.getHours()}:${now.getMinutes().toString().padStart(2,'0')}`;
+      
       let logMsg = "";
-      
-      if (e.data === 'win') logMsg = `${timeStr} 抽獎：完美合成 ★`;
-      if (e.data === 'near') logMsg = `${timeStr} 抽獎：還差一點點`;
-      if (e.data === 'lose') logMsg = `${timeStr} 抽獎：銘謝惠顧`;
-      
+      let bonusValue = 0; 
+      let bonusColor = "";
+
+      if (e.data === 'win') {
+        logMsg = `🏆 完美合成！(+1分)`;
+        bonusValue = 1; 
+        bonusColor = "#FFD700"; // 金色
+      } else if (e.data === 'near') {
+        logMsg = `✨ 還差一點！(+0.5分)`;
+        bonusValue = 0.5;
+        bonusColor = "#FFA500"; // 橘色
+      } else if (e.data === 'lose') {
+        logMsg = `⛏️ 挖掘失敗`;
+        bonusValue = 0;
+        bonusColor = "#dfe6e9"; // 灰白色
+      }
+
       if (logMsg) {
+        // 1. 即時在畫面上顯示紀錄
         const todayList = document.getElementById('todayList');
-        const currentLogs = todayList.innerHTML === "今天還沒有紀錄" ? "" : todayList.innerHTML;
-        todayList.innerHTML = `<span style="color:#ffeb3b;">${logMsg}</span><br>${currentLogs}`;
+        const currentLogs = (todayList.innerHTML === "今天還沒有紀錄") ? "" : todayList.innerHTML;
+        todayList.innerHTML = `<div style="color:${bonusColor}; border-left: 3px solid ${bonusColor}; padding-left: 8px; margin-bottom: 5px; font-weight: bold;">${timeStr} [${currentUser}] ${logMsg}</div>` + currentLogs;
+
+        // 2. 判斷：只有中獎 (bonusValue > 0) 才寫入試算表
+        if (bonusValue > 0) {
+          const note = encodeURIComponent(`自動紀錄：${logMsg}`);
+          const saveUrl = `${gasUrl}?action=addData&user=${currentUser}&category=獎勵&item=抽獎&value=${bonusValue}&otherNote=&note=${note}`;
+          
+          fetch(saveUrl).then(() => {
+            console.log("中獎紀錄已同步至試算表");
+            refreshData(); // 自動重新抓取總能量，讓加分立刻反應在螢幕上
+          });
+        } else {
+          console.log("挖掘失敗，不佔用試算表空間");
+        }
       }
     }, false);
 

@@ -286,7 +286,7 @@
       renderChest();
     }
 
-    function submitForm() {
+        function submitForm() {
       if (!userKey) { checkAccess(); return; }
       const user = document.querySelector('input[name="user"]:checked').value;
       const submitBtn = document.querySelector('button[onclick="submitForm()"]');
@@ -314,12 +314,14 @@
       const otherNote = isTextMode ? valRaw : "";
       const url = `${gasUrl}?action=addData&key=${userKey}&user=${user}&category=${type}&item=${item}&value=${finalVal}&otherNote=${encodeURIComponent(otherNote)}&note=${encodeURIComponent(note)}`;
       
+      // 每次存檔前先隱藏舊的掉落物區塊
       document.getElementById('giftArea').classList.add('hidden');
       document.getElementById('luckyGif').src = "";
 
       fetch(url).then(res => res.text()).then(giftUrl => {
         const cleanUrl = giftUrl.replace(/"/g, "").trim(); 
         
+        // 1. 判斷是否觸發 Slot
         let hasSlot = false;
         if (user === "姐") {
           hasSlot = true;
@@ -329,17 +331,21 @@
           }
         }
 
+        // 2. 判斷是否為有效圖片
+        const isImage = cleanUrl.startsWith("http");
+
+        // 3. 執行「發現掉落物」邏輯 (Slot 優先於 Gif)
         if (hasSlot) {
           alert("🍎 發現掉落物！");
-          setTimeout(openSlotModal, 500);
-        } else if (user === "卉" && cleanUrl && cleanUrl.startsWith("http")) {
+          openSlotModal();
+        } else if (user === "卉" && isImage) {
           alert("🍎 發現掉落物！");
-          document.getElementById('giftArea').classList.remove('hidden');
           document.getElementById('luckyGif').src = cleanUrl;
+          document.getElementById('giftArea').classList.remove('hidden');
         }
 
         clearFormAfterSubmit();
-        refreshData();
+        refreshData(); // 更新儀表板與相簿資料
       }).catch(err => {
         console.error("提交失敗:", err);
         alert("連線失敗，請稍後再試");

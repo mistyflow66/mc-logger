@@ -15,6 +15,7 @@
     .container { background: #3c3c3c; border: 4px solid #000; padding: 20px; border-radius: 4px; max-width: 400px; margin: auto; }
     h2 { color: #8bc34a; text-shadow: 2px 2px #000; margin: 10px 0; }
     
+    /* 儀表板爆閃效果 */
     .dashboard { background: #000; border: 4px solid #555; padding: 15px; margin-bottom: 15px; cursor: default; transition: 0.3s; position: relative; overflow: hidden; }
     .jackpot-active { border-color: var(--gold); box-shadow: 0 0 20px var(--gold); animation: flash-gold 0.8s infinite; }
     
@@ -34,6 +35,7 @@
     .radio-group { cursor: pointer; display: flex; align-items: center; }
     select, input { width: 100%; padding: 12px; margin-bottom: 10px; border: 3px solid #000; background: #fff; box-sizing: border-box; font-size: 16px; color: #000; }
     button { width: 100%; padding: 15px; background: var(--mc-green); color: white; border: 3px solid #1b5e20; font-weight: bold; font-size: 18px; cursor: pointer; box-shadow: 0 4px #1b5e20; }
+    
     .daily-log { background: #252525; border: 2px solid #555; padding: 10px; margin-top: 15px; text-align: left; }
     .log-title { border-bottom:1px solid #555; font-weight:bold; color: #ffeb3b; margin-bottom: 5px; }
     .score-table { width: 100%; border-collapse: collapse; margin-top: 5px; font-size: 13px; color: #fff; }
@@ -41,6 +43,7 @@
     .score-table th { background: #795548; }
     .hidden { display: none !important; }
 
+    /* 彈窗樣式 */
     .modal-overlay {
       display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
       background: rgba(0,0,0,0.85); z-index: 10000; justify-content: center; align-items: center;
@@ -60,7 +63,7 @@
 <body>
   <div class="container">
     <h2>💎 冒險儀表板</h2>
-    <div id="timer" style="font-size: 12px; color: #aaa; margin-bottom: 10px;">最後更新：載入中...</div>
+    <div id="timer" style="font-size: 12px; color: #aaa; margin-bottom: 10px;">載入中...</div>
 
     <div id="mainDashboard" class="dashboard" onclick="handleDashboardClick()">
       <div style="color:#fff; font-size:14px;">🔋 目前 3C 能量</div>
@@ -107,7 +110,7 @@
     </div>
 
     <div id="giftArea" class="hidden" style="margin-top:20px; background:#000; border:3px dashed #ffeb3b; padding:10px;">
-      <div style="color:#ffeb3b; font-weight: bold;">🍎 發現掉落物！</div>
+      <div style="color:#ffeb3b; font-weight:bold;">🍎 發現掉落物！</div>
       <img id="luckyGif" src="" style="width:100%; border-radius:8px; margin-top:5px;">
     </div>
 
@@ -125,14 +128,14 @@
       <div class="log-title" style="color: #8bc34a;">📊 運動換算表</div>
       <table class="score-table">
         <thead>
-          <tr><th>項目</th><th>基準</th><th>能量</th></tr>
+          <tr><th>項目</th><th>基準單位</th><th>能量</th></tr>
         </thead>
         <tbody>
           <tr><td>跳繩</td><td>100 下</td><td>+ 5</td></tr>
           <tr><td>跑步</td><td>200 公尺</td><td>+ 5</td></tr>
           <tr><td>仰臥起坐</td><td>1 分鐘</td><td>+ 5</td></tr>
-          <tr style="color: #ffeb3b;"><td>⭐ 自己起床</td><td>10 次</td><td>+ 5</td></tr>
-          <tr style="color: #ffeb3b;"><td>❤️ GOOD</td><td>10 次</td><td>+ 10</td></tr>
+          <tr style="color: #ffeb3b; background: #333;"><td>⭐ 自己起床</td><td>滿 10 次</td><td>+ 5</td></tr>
+          <tr style="color: #ffeb3b; background: #333;"><td>❤️ GOOD</td><td>滿 10 次</td><td>+ 10</td></tr>
         </tbody>
       </table>
     </div>
@@ -141,7 +144,7 @@
   <div id="slotModal" class="modal-overlay">
     <div class="modal-content">
       <span class="close-btn" onclick="closeSlotModal()">&times;</span>
-      <iframe id="slotFrame" src="slot.html" width="100%" height="400px" frameborder="0" scrolling="no"></iframe>
+      <iframe id="slotFrame" src="" width="100%" height="400px" frameborder="0" scrolling="no"></iframe>
     </div>
   </div>
 
@@ -165,22 +168,6 @@
     let dashClickCount = 0;
     let dashClickTimer = null;
 
-    function updateTimer() {
-      const now = new Date();
-      const diff = openingDate - now;
-      let countdownText = "";
-      if (diff > 0) {
-        const days = Math.floor(diff / 86400000);
-        const hours = Math.floor((diff % 86400000) / 3600000);
-        const mins = Math.floor((diff % 3600000) / 60000);
-        countdownText = `距離開學：${days}天 ${hours}時 ${mins}分`;
-      } else {
-        countdownText = "🎒 已開學，加油！";
-      }
-      const timeStr = `${now.getHours()}:${now.getMinutes().toString().padStart(2, '0')}`;
-      document.getElementById('timer').innerText = `最後更新：${now.getMonth()+1}/${now.getDate()} ${timeStr} | ${countdownText}`;
-    }
-
     function refreshData() {
       if (!userKey) return;
       fetch(`${gasUrl}?action=readData&key=${userKey}`)
@@ -189,7 +176,6 @@
           if (data.error) {
             localStorage.removeItem('mc_access_key');
             userKey = "";
-            checkAccess();
             return;
           }
           document.getElementById('balanceDisplay').innerText = data.total3C || 0;
@@ -214,6 +200,7 @@
         });
     }
 
+    // 監聽抽獎機訊息
     window.addEventListener('message', function(e) {
       if (e.data === 'closeModal') { closeSlotModal(); return; }
       const currentUser = document.querySelector('input[name="user"]:checked').value;
@@ -262,8 +249,9 @@
       }
     }
 
+    // 存檔邏輯：補回掉落物檢測
     function submitForm() {
-      if (!userKey) { checkAccess(); return; }
+      if (!userKey) return;
       const user = document.querySelector('input[name="user"]:checked').value;
       const submitBtn = document.querySelector('button[onclick="submitForm()"]');
       if (user === '姐' && document.getElementById('passwordInput').value !== "3672") { alert("密碼錯誤！"); return; }
@@ -274,12 +262,11 @@
       if (!type || !item || !valRaw) { alert("內容未填齊！"); return; }
       
       submitBtn.disabled = true;
-      submitBtn.innerText = "⏳ 存檔中...";
       const isText = (type === "規劃" || item === "其他");
       const url = `${gasUrl}?action=addData&key=${userKey}&user=${user}&category=${type}&item=${item}&value=${isText?0:valRaw}&otherNote=${encodeURIComponent(isText?valRaw:"")}&note=${encodeURIComponent(document.getElementById('noteInput').value)}`;
       
       fetch(url).then(res => res.text()).then(resText => {
-        // 判斷是否為掉落物網址
+        // 重要：偵測回傳是否為圖片 URL
         if (user === "卉" && resText && resText.startsWith("http")) {
           document.getElementById('giftArea').classList.remove('hidden');
           document.getElementById('luckyGif').src = resText;
@@ -287,17 +274,14 @@
           document.getElementById('giftArea').classList.add('hidden');
         }
         
-        // 運動抽獎機率
+        // 觸發抽獎
         if (user === "姐" || (user === "卉" && type === "運動" && Math.random() < 0.25)) {
           setTimeout(openSlotModal, 1000);
         }
         refreshData();
         document.getElementById('valueInput').value = "";
         document.getElementById('noteInput').value = "";
-      }).finally(() => { 
-        submitBtn.disabled = false; 
-        submitBtn.innerText = "💾 存檔紀錄";
-      });
+      }).finally(() => { submitBtn.disabled = false; });
     }
 
     function renderChest() {
@@ -310,9 +294,14 @@
     }
 
     function toggleChest() { document.getElementById('chestWrapper').classList.toggle('hidden'); }
-    function openSlotModal() { document.getElementById('slotModal').style.display = 'flex'; }
+    
+    function openSlotModal() { 
+      document.getElementById('slotFrame').src = "slot.html"; 
+      document.getElementById('slotModal').style.display = 'flex'; 
+    }
     function closeSlotModal() { document.getElementById('slotModal').style.display = 'none'; }
     
+    // 點擊 5 下開啟苦力怕：補回每次重置 iframe 邏輯
     function handleDashboardClick() {
       dashClickCount++;
       clearTimeout(dashClickTimer);
@@ -324,31 +313,40 @@
     }
 
     function openCreeperModal() {
-      document.getElementById('creeperFrame').src = "https://mistyflow66.github.io/creeper/";
-      document.getElementById('creeperModal').style.display = 'flex';
+      const frame = document.getElementById('creeperFrame');
+      frame.src = ""; // 先清空，確保每次都是全新的遊戲
+      setTimeout(() => {
+        frame.src = "https://mistyflow66.github.io/creeper/";
+        document.getElementById('creeperModal').style.display = 'flex';
+      }, 50);
     }
 
     function closeCreeperModal() {
       document.getElementById('creeperModal').style.display = 'none';
-      document.getElementById('creeperFrame').src = ""; // 關閉時清空，節省資源
+      document.getElementById('creeperFrame').src = ""; 
     }
 
-    function checkAccess() {
-      if(!userKey) {
-        userKey = prompt("通關密語：");
-        if(userKey) {
-          localStorage.setItem('mc_access_key', userKey);
-          refreshData();
-        }
-      }
+    function updateTimer() {
+      const now = new Date();
+      const diff = openingDate - now;
+      const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+      const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+      document.getElementById('timer').innerText = `更新：${now.getMonth()+1}/${now.getDate()} ${now.getHours()}:${now.getMinutes().toString().padStart(2,'0')} | 距離開學：${days} 天 ${hours} 時`;
     }
 
-    window.onload = () => {
-      updateTimer(); // 立即顯示時間
-      switchUser('卉');
-      checkAccess();
-      if(userKey) refreshData();
-      setInterval(updateTimer, 60000); // 每分鐘更新
+    function checkAccess() { 
+      if(!userKey) { 
+        userKey = prompt("請輸入通關密語："); 
+        if(userKey) { localStorage.setItem('mc_access_key', userKey); refreshData(); } 
+      } 
+    }
+
+    window.onload = () => { 
+      switchUser('卉'); 
+      checkAccess(); 
+      if(userKey) refreshData(); 
+      setInterval(updateTimer, 60000); 
+      updateTimer();
     };
   </script>
 </body>

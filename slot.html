@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MC Item Slot Machine</title>
+    <style>
+        :root {
+            --mc-dark: #212121;
+            --mc-gray: #8B8B8B;
+            --mc-light-gray: #BDBDBD;
+            --mc-border-dark: #373737;
+            --mc-green: #008000; /* 加深綠色提高對比 */
+            --mc-orange: #D96F00; /* 加深橘色，確保清晰 */
+        }
+
+        body {
+            background-color: transparent;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: 'Segoe UI', Arial, sans-serif;
+            overflow: hidden;
+            height: 100vh;
+        }
+
+        .machine-wrap {
+            width: 92vw;
+            max-width: 360px;
+            background-color: var(--mc-light-gray);
+            border-top: 4px solid #FFF;
+            border-left: 4px solid #FFF;
+            border-right: 4px solid var(--mc-border-dark);
+            border-bottom: 4px solid var(--mc-border-dark);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.5);
+            padding: 18px;
+            box-sizing: border-box;
+            text-align: center;
+        }
+
+        h2 {
+            margin: 0 0 15px 0;
+            color: var(--mc-dark);
+            text-shadow: 1px 1px 0px #FFF;
+            font-size: 1.1rem;
+        }
+
+        .slot-container {
+            display: flex;
+            justify-content: space-between;
+            background-color: var(--mc-gray);
+            border: 4px solid var(--mc-dark);
+            padding: 8px;
+            gap: 6px;
+            margin-bottom: 18px;
+        }
+
+        .reel {
+            flex: 1;
+            aspect-ratio: 1 / 1;
+            background-color: #8B8B8B;
+            border-top: 4px solid var(--mc-border-dark);
+            border-left: 4px solid var(--mc-border-dark);
+            border-right: 4px solid #FFF;
+            border-bottom: 4px solid #FFF;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        .reel img {
+            width: 75%;
+            height: 75%;
+            image-rendering: pixelated;
+            object-fit: contain;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 12px;
+            background-color: var(--mc-gray);
+            border-top: 3px solid #DDD;
+            border-left: 3px solid #DDD;
+            border-right: 3px solid var(--mc-dark);
+            border-bottom: 3px solid var(--mc-dark);
+            color: #FFF;
+            text-shadow: 2px 2px 0px #333;
+            font-size: 1.1rem;
+            cursor: pointer;
+        }
+
+        .btn:active {
+            border-top: 3px solid var(--mc-dark);
+            border-left: 3px solid var(--mc-dark);
+            border-right: 3px solid #DDD;
+            border-bottom: 3px solid #DDD;
+        }
+
+        #status {
+            margin-top: 15px;
+            height: 24px;
+            font-size: 1rem;
+            font-weight: bold;
+            /* 加上文字陰影確保在灰色背景上清晰 */
+            text-shadow: 1px 1px 0px rgba(255,255,255,0.5);
+        }
+
+        @keyframes blurMove {
+            0% { transform: translateY(-3px); }
+            50% { transform: translateY(3px); }
+            100% { transform: translateY(-3px); }
+        }
+
+        .spinning img {
+            animation: blurMove 0.1s infinite;
+        }
+    </style>
+</head>
+<body>
+
+<div class="machine-wrap">
+    <h2>物品合成機</h2>
+    
+    <div class="slot-container">
+        <div id="r1" class="reel"><img id="img1" src="https://static.wikia.nocookie.net/minecraft/images/2/2f/New_DiamondB.png" alt="item"></div>
+        <div id="r2" class="reel"><img id="img2" src="https://static.wikia.nocookie.net/minecraft/images/8/8b/New_EmeraldB.png" alt="item"></div>
+        <div id="r3" class="reel"><img id="img3" src="https://static.wikia.nocookie.net/minecraft/images/6/69/GoldenAppleNew.png" alt="item"></div>
+    </div>
+
+    <button class="btn" id="spinBtn" onclick="startSpin()">開始抽取</button>
+    <div id="status">準備就緒</div>
+</div>
+
+<script>
+    const items = [
+        "https://static.wikia.nocookie.net/minecraft/images/2/25/BoneNew.png",
+        "https://static.wikia.nocookie.net/minecraft/images/2/2f/New_DiamondB.png",
+        "https://static.wikia.nocookie.net/minecraft/images/7/73/New_Gold_IngotB.png",
+        "https://static.wikia.nocookie.net/minecraft/images/0/00/MelonSliceNew.png",
+        "https://static.wikia.nocookie.net/minecraft/images/6/63/Carrot_Updated.png",
+        "https://static.wikia.nocookie.net/minecraft/images/6/69/GoldenAppleNew.png",
+        "https://static.wikia.nocookie.net/minecraft/images/7/7d/Apple.png",
+        "https://static.wikia.nocookie.net/minecraft/images/e/ef/BookNew.png",
+        "https://static.wikia.nocookie.net/minecraft/images/8/8a/Pufferfish%28Item%29.png",
+        "https://static.wikia.nocookie.net/minecraft/images/8/8b/New_EmeraldB.png"
+    ];
+
+    let isSpinning = false;
+
+    function startSpin() {
+        if (isSpinning) return;
+        isSpinning = true;
+
+        const btn = document.getElementById('spinBtn');
+        const status = document.getElementById('status');
+        btn.disabled = true;
+        status.textContent = "挖掘中...";
+        status.style.color = "#212121";
+
+        let results = [];
+        
+        // --- 平衡性調整：增加 10% 必中機率 ---
+        let luckyDraw = Math.random() < 0.1; 
+        let winIndex = Math.floor(Math.random() * items.length);
+
+        [1, 2, 3].forEach((id, index) => {
+            const container = document.getElementById(`r${id}`);
+            const img = document.getElementById(`img${id}`);
+            container.classList.add('spinning');
+
+            let timer = setInterval(() => {
+                img.src = items[Math.floor(Math.random() * items.length)];
+            }, 100);
+
+            setTimeout(() => {
+                clearInterval(timer);
+                let finalIdx;
+                if (luckyDraw) {
+                    finalIdx = winIndex; // 強制必中
+                } else {
+                    finalIdx = Math.floor(Math.random() * items.length);
+                }
+                
+                img.src = items[finalIdx];
+                results.push(finalIdx);
+                container.classList.remove('spinning');
+
+                if (results.length === 3) {
+                    checkWin(results);
+                }
+            }, 1200 + (index * 600));
+        });
+    }
+
+    function checkWin(res) {
+        isSpinning = false;
+        document.getElementById('spinBtn').disabled = false;
+        const status = document.getElementById('status');
+
+        if (res[0] === res[1] && res[1] === res[2]) {
+            status.textContent = "★ 完美的合成！ ★";
+            status.style.color = "var(--mc-green)";
+        } else if (res[0] === res[1] || res[1] === res[2] || res[0] === res[2]) {
+            status.textContent = "還差一點點！";
+            status.style.color = "var(--mc-orange)";
+        } else {
+            status.textContent = "挖掘失敗，再試一次";
+            status.style.color = "#333";
+        }
+    }
+
+// 判定結束後，如果是被嵌入在 iframe 中
+if (window.self !== window.top) {
+    // 鎖定按鈕，不讓使用者再按第二次
+    document.getElementById('spinBtn').disabled = true;
+    document.getElementById('spinBtn').textContent = "本次機會已用完";
+    
+    // (可選) 3秒後自動關閉視窗，讓流程更順暢
+    setTimeout(() => {
+        window.parent.postMessage('closeModal', '*');
+    }, 3000);
+}
+
+</script>
+
+</body>
+</html>

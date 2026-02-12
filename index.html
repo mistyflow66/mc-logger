@@ -287,7 +287,7 @@
       renderChest();
     }
 
-    function submitForm() {
+        function submitForm() {
       if (!userKey) { checkAccess(); return; }
       const user = document.querySelector('input[name="user"]:checked').value;
       const submitBtn = document.querySelector('button[onclick="submitForm()"]');
@@ -306,32 +306,45 @@
       if (!isTextMode && isNaN(valRaw)) {
         alert("這項請輸入『數字』，不要輸入文字！"); return;
       }
+      
       submitBtn.disabled = true;
       submitBtn.innerText = "⏳ 傳送中...";
       submitBtn.style.background = "#95a5a6";
+      
       const finalVal = isTextMode ? 0 : valRaw;
       const otherNote = isTextMode ? valRaw : "";
       const url = `${gasUrl}?action=addData&key=${userKey}&user=${user}&category=${type}&item=${item}&value=${finalVal}&otherNote=${encodeURIComponent(otherNote)}&note=${encodeURIComponent(note)}`;
       
+      // 先隱藏掉落物區域，避免上次的結果干擾
+      document.getElementById('giftArea').classList.add('hidden');
+      document.getElementById('luckyGif').src = "";
+
       fetch(url).then(res => res.text()).then(giftUrl => {
-        if (user === "卉" && giftUrl && !["Error", "Success"].includes(giftUrl)) {
+        // 核心邏輯：判斷回傳內容是否為網址
+        const cleanUrl = giftUrl.replace(/"/g, "").trim(); // 去掉可能的引號
+        
+        if (user === "卉" && cleanUrl && cleanUrl.startsWith("http")) {
           document.getElementById('giftArea').classList.remove('hidden');
-          document.getElementById('luckyGif').src = giftUrl;
-          alert("發現掉落物！");
+          document.getElementById('luckyGif').src = cleanUrl;
+          alert("🍎 發現掉落物！");
         } else {
-          alert("存檔成功！");
+          alert("💾 存檔成功！");
         }
         
+        // 抽獎邏輯維持不變
         if (user === "姐") {
           setTimeout(openSlotModal, 1000);
         } else if (user === "卉" && type === "運動") {
-          if (Math.random() < 0.25) {
+          if (Math.random() < 0.5) {
             setTimeout(openSlotModal, 1000);
           }
         }
 
         clearFormAfterSubmit();
         refreshData();
+      }).catch(err => {
+        console.error("提交失敗:", err);
+        alert("連線失敗，請稍後再試");
       }).finally(() => {
         submitBtn.disabled = false;
         submitBtn.innerText = "💾 存檔紀錄";

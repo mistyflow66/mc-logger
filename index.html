@@ -15,7 +15,6 @@
     .container { background: #3c3c3c; border: 4px solid #000; padding: 20px; border-radius: 4px; max-width: 400px; margin: auto; }
     h2 { color: #8bc34a; text-shadow: 2px 2px #000; margin: 10px 0; }
     
-    /* 儀表板黑框 */
     .dashboard { background: #000; border: 4px solid #555; padding: 15px; margin-bottom: 15px; cursor: default; }
     
     .balance-value { color: #00e676; font-size: 32px; font-weight: bold; font-family: 'Courier New', monospace; }
@@ -30,7 +29,6 @@
     .score-table th { background: #795548; }
     .hidden { display: none !important; }
 
-    /* 通用彈出視窗樣式 */
     .modal-overlay {
       display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
       background: rgba(0,0,0,0.85); z-index: 10000; justify-content: center; align-items: center;
@@ -143,6 +141,19 @@
   </div>
 
   <script>
+    let userKey = localStorage.getItem('mc_access_key') || "";
+
+    function checkAccess() {
+      if (!userKey) {
+        const input = prompt("請輸入通關密語以連結試算表：");
+        if (input) {
+          userKey = input;
+          localStorage.setItem('mc_access_key', input);
+          refreshData();
+        }
+      }
+    }
+
     const gasUrl = "https://script.google.com/macros/s/AKfycby8MaeORmgHynbc4qTnjUUCyn12NWZYJP6HEhCZ1wEsXOX3fnTlQT-LP9l8FRNQf4cG/exec"; 
     const openingDate = new Date("2026-02-23");
     const optionsMap = {
@@ -184,7 +195,6 @@
     function openCreeperModal() {
       const modal = document.getElementById('creeperModal');
       const iframe = modal.querySelector('iframe');
-      // 強制刷新的關鍵：重新賦予 src 網址
       iframe.src = "https://mistyflow66.github.io/creeper/";
       modal.style.display = 'flex';
     }
@@ -226,9 +236,17 @@
     }
 
     function refreshData() {
-      fetch(`${gasUrl}?action=readData`)
+      if (!userKey) { checkAccess(); return; }
+      fetch(`${gasUrl}?action=readData&key=${userKey}`)
         .then(res => res.json())
         .then(data => {
+          if (data.error) {
+            alert("密碼錯誤，請重新輸入");
+            localStorage.removeItem('mc_access_key');
+            userKey = "";
+            checkAccess();
+            return;
+          }
           document.getElementById('balanceDisplay').innerText = data.total3C || 0;
           document.getElementById('todayList').innerHTML = (data.todayLogs && data.todayLogs.length > 0) ? data.todayLogs.join("<br>") : "今天還沒有紀錄";
           document.getElementById('wakeupCount').innerText = data.wakeup || 0;
@@ -269,6 +287,7 @@
     }
 
     function submitForm() {
+      if (!userKey) { checkAccess(); return; }
       const user = document.querySelector('input[name="user"]:checked').value;
       const submitBtn = document.querySelector('button[onclick="submitForm()"]');
       if (user === '姐' && document.getElementById('passwordInput').value !== "3672") {
@@ -291,7 +310,7 @@
       submitBtn.style.background = "#95a5a6";
       const finalVal = isTextMode ? 0 : valRaw;
       const otherNote = isTextMode ? valRaw : "";
-      const url = `${gasUrl}?action=addData&user=${user}&category=${type}&item=${item}&value=${finalVal}&otherNote=${encodeURIComponent(otherNote)}&note=${encodeURIComponent(note)}`;
+      const url = `${gasUrl}?action=addData&key=${userKey}&user=${user}&category=${type}&item=${item}&value=${finalVal}&otherNote=${encodeURIComponent(otherNote)}&note=${encodeURIComponent(note)}`;
       
       fetch(url).then(res => res.text()).then(giftUrl => {
         if (user === "卉" && giftUrl && !["Error", "Success"].includes(giftUrl)) {
@@ -302,12 +321,9 @@
           alert("存檔成功！");
         }
         
-        // --- 拉霸機邏輯修正 ---
         if (user === "姐") {
-          // 姐存檔：每次都彈出
           setTimeout(openSlotModal, 1000);
         } else if (user === "卉" && type === "運動") {
-          // 卉存檔：且類別是運動，才有 25% 機率
           if (Math.random() < 0.25) {
             setTimeout(openSlotModal, 1000);
           }
@@ -344,7 +360,7 @@
       document.getElementById('slotModal').style.display = 'none';
     }
 
-            window.addEventListener('message', function(e) {
+    window.addEventListener('message', function(e) {
       if (e.data === 'closeModal') {
         closeSlotModal();
         return;
@@ -361,41 +377,41 @@
       if (e.data === 'win') {
         logMsg = `🏆 完美合成！(+1分)`;
         bonusValue = 1; 
-        bonusColor = "#FFD700"; // 金色
+        bonusColor = "#FFD700";
       } else if (e.data === 'near') {
         logMsg = `✨ 還差一點！(+0.5分)`;
         bonusValue = 0.5;
-        bonusColor = "#FFA500"; // 橘色
+        bonusColor = "#FFA500";
       } else if (e.data === 'lose') {
         logMsg = `⛏️ 挖掘失敗`;
         bonusValue = 0;
-        bonusColor = "#dfe6e9"; // 灰白色
+        bonusColor = "#dfe6e9";
       }
 
       if (logMsg) {
-        // 1. 即時在畫面上顯示紀錄
         const todayList = document.getElementById('todayList');
         const currentLogs = (todayList.innerHTML === "今天還沒有紀錄") ? "" : todayList.innerHTML;
         todayList.innerHTML = `<div style="color:${bonusColor}; border-left: 3px solid ${bonusColor}; padding-left: 8px; margin-bottom: 5px; font-weight: bold;">${timeStr} [${currentUser}] ${logMsg}</div>` + currentLogs;
 
-        // 2. 判斷：只有中獎 (bonusValue > 0) 才寫入試算表
-        if (bonusValue > 0) {
+        if (bonusValue > 0 && currentUser === "卉" && userKey) {
           const note = encodeURIComponent(`自動紀錄：${logMsg}`);
-          const saveUrl = `${gasUrl}?action=addData&user=${currentUser}&category=獎勵&item=抽獎&value=${bonusValue}&otherNote=&note=${note}`;
+          const saveUrl = `${gasUrl}?action=addData&key=${userKey}&user=${currentUser}&category=獎勵&item=抽獎&value=${bonusValue}&otherNote=&note=${note}`;
           
           fetch(saveUrl).then(() => {
             console.log("中獎紀錄已同步至試算表");
-            refreshData(); // 自動重新抓取總能量，讓加分立刻反應在螢幕上
+            refreshData();
           });
-        } else {
-          console.log("挖掘失敗，不佔用試算表空間");
         }
       }
     }, false);
 
     window.onload = () => { 
       switchUser('卉'); 
-      refreshData(); 
+      if(userKey) {
+        refreshData();
+      } else {
+        checkAccess();
+      }
       updateTimer(); 
       setRandomPlaceholder();
       setInterval(updateTimer, 60000);

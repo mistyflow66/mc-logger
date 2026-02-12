@@ -344,18 +344,21 @@
       document.getElementById('slotModal').style.display = 'none';
     }
 
-    window.addEventListener('message', function(e) {
-  if (e.data === 'closeModal') {
-    closeSlotModal();
-    return;
-  }
-  // ... 原本處理 win/near/lose 的 log 邏輯 ...
-}, false);
-
+        window.addEventListener('message', function(e) {
+      if (e.data === 'closeModal') {
+        closeSlotModal();
+        return;
+      }
+      
+      // 修復：正確定義時間與訊息處理邏輯
+      const now = new Date();
+      const timeStr = `${now.getHours()}:${now.getMinutes().toString().padStart(2,'0')}`;
       let logMsg = "";
+      
       if (e.data === 'win') logMsg = `${timeStr} 抽獎：完美合成 ★`;
       if (e.data === 'near') logMsg = `${timeStr} 抽獎：還差一點點`;
       if (e.data === 'lose') logMsg = `${timeStr} 抽獎：銘謝惠顧`;
+      
       if (logMsg) {
         const todayList = document.getElementById('todayList');
         const currentLogs = todayList.innerHTML === "今天還沒有紀錄" ? "" : todayList.innerHTML;
@@ -373,4 +376,3 @@
   </script>
 </body>
 </html>
-

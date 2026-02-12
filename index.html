@@ -197,27 +197,30 @@
       const valRaw = document.getElementById('valueInput').value.trim();
       if (!type || !item || !valRaw) { alert("內容未填齊！"); return; }
 
-      btn.disabled = true; btn.innerText = "⏳ 傳送中...";
+      btn.disabled = true; btn.innerText = "⏳ 存檔中...";
       const isText = (type === "規劃" || item === "其他");
       const url = `${gasUrl}?action=addData&key=${userKey}&user=${user}&category=${type}&item=${item}&value=${isText?0:valRaw}&otherNote=${encodeURIComponent(isText?valRaw:"")}&note=${encodeURIComponent(document.getElementById('noteInput').value)}`;
       
       fetch(url).then(res => res.text()).then(resText => {
-        if (resText.includes("Success")) {
-          // 1. 清空欄位
-          document.getElementById('valueInput').value = "";
-          document.getElementById('noteInput').value = "";
+    if (resText.includes("Success")) {
+        // --- 取代開始 ---
+        document.getElementById('questForm').reset(); // 一次清空所有選單、數字、文字、備註
+        updateItems(); // 重新整理下拉選單，確保顯示「-- 選擇類別 --」
+        // --- 取代結束 ---
+        
+        let triggerSlot = (user === "姐") || (user === "卉" && type === "運動" && Math.random() < 0.5);
+        // ...後面接原本的 confirm 邏輯
           
-          // 2. 顯示掉落物
-          if (user === "卉" && allChestImages.length > 0) {
-            document.getElementById('giftArea').classList.remove('hidden');
-            document.getElementById('luckyGif').src = allChestImages[Math.floor(Math.random() * allChestImages.length)];
-          }
 
-          // 3. 判斷是否彈出 Slot (卉運動機率觸發)
-          if (user === "卉" && type === "運動" && Math.random() < 0.25) {
-             setTimeout(openSlotModal, 1000);
-          } else {
-             alert("💾 存檔成功！");
+          // 核心逻辑：彈出確認視窗，按下確認後才執行動作（不再彈出存檔成功）
+          if (confirm("🍎 發現掉落物！")) {
+            if (triggerGift && allChestImages.length > 0) {
+              document.getElementById('giftArea').classList.remove('hidden');
+              document.getElementById('luckyGif').src = allChestImages[Math.floor(Math.random() * allChestImages.length)];
+            }
+            if (triggerSlot) {
+              openSlotModal();
+            }
           }
           refreshData();
         }
@@ -229,7 +232,11 @@
       const diff = openingDate - now;
       const days = Math.floor(diff / 86400000);
       const hours = Math.floor((diff % 86400000) / 3600000);
-      document.getElementById('timer').innerText = `時間：${now.getHours()}:${now.getMinutes().toString().padStart(2,'0')} | 距離開學：${days} 天 ${hours} 時`;
+      
+      const dateStr = `${now.getMonth()+1}月${now.getDate()}日`;
+      const timeStr = `${now.getHours()}:${now.getMinutes().toString().padStart(2,'0')}`;
+      
+      document.getElementById('timer').innerText = `更新時間：${dateStr} ${timeStr} | 距離開學：${days} 天 ${hours} 時`;
     }
 
     function renderChest() {
@@ -282,4 +289,3 @@
   </script>
 </body>
 </html>
-

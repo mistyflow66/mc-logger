@@ -201,6 +201,8 @@ function checkWin(res) {
     const spinBtn = document.getElementById('spinBtn');
     
     let resultType = "";
+    const urlParams = new URLSearchParams(window.location.search);
+    const isPity = urlParams.get('mode') === 'pity';
 
     // 1. 判定結果文字
     if (res[0] === res[1] && res[1] === res[2]) {
@@ -219,22 +221,19 @@ function checkWin(res) {
 
     // 2. 處理保底與關閉邏輯
     if (window.self !== window.top) {
-        // 先通知主頁面結果（存檔）
-        window.parent.postMessage(resultType, '*');
-
-        const urlParams = new URLSearchParams(window.location.search);
-        const isPity = urlParams.get('mode') === 'pity';
-
+        
         if (isPity && resultType === 'lose') {
-            // 【保底失敗模式】：不鎖定按鈕，不啟動關閉定時器
+            // 【保底失敗模式】：不發送結果給主頁面，不扣除次數，不關閉視窗
             status.textContent = "保底能量啟動！請再試一次";
-            status.style.color = "#D96F00"; // 換個顏色提醒
+            status.style.color = "#D96F00"; 
             spinBtn.disabled = false;
             spinBtn.textContent = "再次挖掘";
         } else {
-            // 【一般模式 或 保底中獎】：鎖定按鈕，3秒後自動關閉
+            // 【一般模式】 或 【保底中獎(win/near)】：正常發送結果並關閉
+            window.parent.postMessage(resultType, '*'); // 發送 win/near/lose 給主頁存檔
+            
             spinBtn.disabled = true;
-            spinBtn.textContent = "本次機會已用完";
+            spinBtn.textContent = isPity ? "保底領取成功！" : "本次機會已用完";
             
             setTimeout(() => {
                 window.parent.postMessage('closeModal', '*');

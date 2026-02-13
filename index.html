@@ -57,10 +57,14 @@
       <div style="color:#fff; font-size:14px;">🔋 目前 3C 能量</div>
       <div class="balance-value" id="balanceDisplay">0</div>
       <div class="stamp-card">
-        <div class="stamp-item">⭐ 自己起床: <span id="wakeupCount">0</span>/10</div>
-        <div class="stamp-item">❤️ GOOD: <span id="goodCount">0</span>/10</div>
-      </div>
-    </div>
+    <div class="stamp-item">⭐ 自己起床: <span id="wakeupCount">0</span>/10</div>
+    <div class="stamp-item">❤️ GOOD: <span id="goodCount">0</span>/10</div>
+  </div>
+
+  <div style="font-size: 11px; color: #55efc4; margin-top: 8px; font-family: monospace;">
+    🍀 幸運值累積: <span id="pityCount">0</span> / 5 (滿 5 次送免費抽)
+  </div>
+</div>
 
     <div class="user-select">
       <span>角色:</span>
@@ -253,6 +257,7 @@
           document.getElementById('todayList').innerHTML = (data.todayLogs && data.todayLogs.length > 0) ? data.todayLogs.join("<br>") : "今天還沒有紀錄";
           document.getElementById('wakeupCount').innerText = data.wakeup || 0;
           document.getElementById('goodCount').innerText = data.good || 0;
+          document.getElementById('pityCount').innerText = data.pityProgress || 0;
           document.getElementById('noteList').innerHTML = (data.notes && data.notes.length > 0) ? data.notes.join("<br>") : "目前沒有留言";
           allChestImages = data.myChest || [];
           renderChest();
@@ -401,6 +406,7 @@
       let logMsg = "";
       let bonusValue = 0; 
       let bonusColor = "";
+      let isFail = false; // 新增標記
 
       if (e.data === 'win') {
         logMsg = `🏆 完美合成！(+1分)`;
@@ -414,6 +420,7 @@
         logMsg = `⛏️ 挖掘失敗`;
         bonusValue = 0;
         bonusColor = "#dfe6e9";
+        isFail = true; // 標記為失敗
       }
 
       if (logMsg) {
@@ -421,17 +428,43 @@
         const currentLogs = (todayList.innerHTML === "今天還沒有紀錄") ? "" : todayList.innerHTML;
         todayList.innerHTML = `<div style="color:${bonusColor}; border-left: 3px solid ${bonusColor}; padding-left: 8px; margin-bottom: 5px; font-weight: bold;">${timeStr} [${currentUser}] ${logMsg}</div>` + currentLogs;
 
-        if (bonusValue > 0 && currentUser === "卉" && userKey) {
-          const note = encodeURIComponent(`自動紀錄：${logMsg}`);
-          const saveUrl = `${gasUrl}?action=addData&key=${userKey}&user=${currentUser}&category=獎勵&item=抽獎&value=${bonusValue}&otherNote=&note=${note}`;
-          
-          fetch(saveUrl).then(() => {
-            console.log("中獎紀錄已同步至試算表");
-            refreshData();
+         // --- 修改這裡：針對「卉」或「guest」進行存檔 ---
+    if (userKey && (currentUser === "卉" || currentUser === "guest") && (bonusValue > 0 || isFail)) {
+      
+      // 根據結果決定項目名稱與數值
+      const itemText = isFail ? "抽獎失敗" : "抽獎";
+      const finalVal = isFail ? 1 : bonusValue; 
+      const note = encodeURIComponent(`自動紀錄：${logMsg}`);
+      
+      const saveUrl = `${gasUrl}?action=addData&key=${userKey}&user=${currentUser}&category=獎勵&item=${itemText}&value=${finalVal}&otherNote=&note=${note}`;
+      
+      fetch(saveUrl).then(res => res.text()).then(() => {
+        console.log("抽獎結果已同步");
+
+        // 存檔成功後立即刷新數據，檢查保底進度
+        fetch(`${gasUrl}?action=readData&key=${userKey}`)
+          .then(res => res.json())
+          .then(data => {
+            // 更新畫面總分與幸運值文字 (如果有 id="pityCount" 的話)
+            document.getElementById('balanceDisplay').innerText = data.total3C;
+            if (document.getElementById('pityCount')) {
+              document.getElementById('pityCount').innerText = data.pityProgress;
+            }
+
+            // --- 保底觸發核心 ---
+            // 只有剛剛是「失敗」且進度歸零（代表滿 5 的倍數）才彈窗
+            if (isFail && data.pityProgress === 0) {
+              setTimeout(() => {
+                if (confirm("✨ 幸運值已滿！獲得一次保底抽獎機會，是否立即使用？")) {
+                  openSlotModal(); 
+                }
+              }, 500);
+            }
           });
-        }
-      }
-    }, false);
+      });
+    }
+  }
+}, false);
 
     window.onload = () => { 
       switchUser('卉'); 

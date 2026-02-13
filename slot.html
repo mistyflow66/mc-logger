@@ -195,13 +195,14 @@
         });
     }
 
-    function checkWin(res) {
+function checkWin(res) {
     isSpinning = false;
     const status = document.getElementById('status');
-    const spinBtn = document.getElementById('spinBtn'); // 取得按鈕
+    const spinBtn = document.getElementById('spinBtn');
+    
+    let resultType = "";
 
-    let resultType = ""; // 用來傳送給父分頁的訊息
-
+    // 1. 判定結果文字
     if (res[0] === res[1] && res[1] === res[2]) {
         status.textContent = "★ 完美的合成！ ★";
         status.style.color = "var(--mc-green)";
@@ -216,21 +217,31 @@
         resultType = "lose";
     }
 
-    // --- 修正後的邏輯：抽完才鎖定並通知 ---
+    // 2. 處理保底與關閉邏輯
     if (window.self !== window.top) {
-        // 1. 通知主頁面抽獎結果 (這會觸發主頁面的日誌紀錄)
+        // 先通知主頁面結果（存檔）
         window.parent.postMessage(resultType, '*');
 
-        // 2. 抽完後鎖定按鈕，防止重複抽
-        spinBtn.disabled = true;
-        spinBtn.textContent = "本次機會已用完";
+        const urlParams = new URLSearchParams(window.location.search);
+        const isPity = urlParams.get('mode') === 'pity';
 
-        // 3. 3秒後自動關閉視窗 (配合主頁面的 closeSlotModal 函數)
-        setTimeout(() => {
-            window.parent.postMessage('closeModal', '*');
-        }, 3000);
+        if (isPity && resultType === 'lose') {
+            // 【保底失敗模式】：不鎖定按鈕，不啟動關閉定時器
+            status.textContent = "保底能量啟動！請再試一次";
+            status.style.color = "#D96F00"; // 換個顏色提醒
+            spinBtn.disabled = false;
+            spinBtn.textContent = "再次挖掘";
+        } else {
+            // 【一般模式 或 保底中獎】：鎖定按鈕，3秒後自動關閉
+            spinBtn.disabled = true;
+            spinBtn.textContent = "本次機會已用完";
+            
+            setTimeout(() => {
+                window.parent.postMessage('closeModal', '*');
+            }, 3000);
+        }
     } else {
-        // 如果是獨立開啟網頁，就不要鎖死，讓測試方便
+        // 獨立開啟時的測試邏輯
         spinBtn.disabled = false;
     }
 }

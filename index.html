@@ -418,10 +418,12 @@ let triggerSlot = false;
       wrapper.classList.toggle('hidden');
     }
 
-    function openSlotModal() {
-      document.getElementById('slotModal').style.display = 'flex';
-      document.getElementById('slotFrame').contentWindow.location.reload();
-    }
+   function openSlotModal() {
+     const slotFrame = document.getElementById('slotFrame');
+     // 檢查目前是否已經是乾淨的 slot.html，避免重複載入
+     slotFrame.src = "slot.html"; 
+     document.getElementById('slotModal').style.display = 'flex';
+   }
 
     function closeSlotModal() {
       document.getElementById('slotModal').style.display = 'none';
@@ -495,7 +497,9 @@ let triggerSlot = false;
             if (isFail && data.pityProgress === 0) {
               setTimeout(() => {
                 if (confirm("✨ 幸運值已滿！獲得一次保底抽獎機會，是否立即使用？")) {
-                  openSlotModal(); 
+                  const slotFrame = document.getElementById('slotFrame');
+                  slotFrame.src = "slot.html?mode=pity"; 
+                  document.getElementById('slotModal').style.display = 'flex';
                 }
               }, 500);
             }

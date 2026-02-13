@@ -164,7 +164,8 @@
     const openingDate = new Date("2026-02-23");
     const optionsMap = {
       "卉": { "運動": ["跳繩", "跑步", "仰臥起坐"], "3C": ["看電視", "用手機", "玩電腦"], "規劃": ["閱讀", "做小書", "練習英文", "其他"] },
-      "姐": { "運動": ["跳繩", "跑步", "仰臥起坐"], "3C": ["看電視", "用手機", "玩電腦"], "獎勵": ["自己起床", "GOOD", "加分", "扣分"] }
+      "姐": { "運動": ["跳繩", "跑步", "仰臥起坐"], "3C": ["看電視", "用手機", "玩電腦"], "獎勵": ["自己起床", "GOOD", "加分", "扣分"] },
+      "guest": {} // 留空即可，邏輯會自動套用「卉」的內容
     };
 
     const randomPlaceholders = ["寫點悄悄話...", "還在ㄊㄟ", "現在的心情...", "(⁠・⁠∀⁠・⁠)", "(⁠ㆁ⁠ω⁠ㆁ⁠)", "(⁠◍⁠•⁠ᴗ⁠•⁠◍⁠)", "今天運動了嗎？"];
@@ -210,23 +211,44 @@
     }
 
     function switchUser(user) {
-      document.getElementById('passwordArea').classList.toggle('hidden', user !== '姐');
-      const typeSelect = document.getElementById('typeSelect');
-      typeSelect.innerHTML = '<option value="">-- 選擇類別 --</option>';
-      Object.keys(optionsMap[user]).forEach(t => typeSelect.add(new Option(t, t)));
-      updateItems();
+    // 判定實際身分
+    const actualUser = (userKey === "guest") ? "guest" : user;
+
+    // 密碼區域：只有真正的「姐」才顯示
+    const pwdArea = document.getElementById('passwordArea');
+    if (pwdArea) pwdArea.classList.toggle('hidden', actualUser !== '姐');
+
+    const typeSelect = document.getElementById('typeSelect');
+    typeSelect.innerHTML = '<option value="">-- 選擇類別 --</option>';
+
+    // 如果身分是 guest，借用「卉」的選單設定
+    const templateUser = (actualUser === "guest") ? "卉" : actualUser;
+
+    if (optionsMap[templateUser]) {
+        Object.keys(optionsMap[templateUser]).forEach(t => {
+            typeSelect.add(new Option(t, t));
+        });
     }
+    updateItems();
+}
 
     function updateItems() {
-      const user = document.querySelector('input[name="user"]:checked').value;
-      const type = document.getElementById('typeSelect').value;
-      const itemSelect = document.getElementById('itemSelect');
-      itemSelect.innerHTML = '<option value="">-- 選擇項目 --</option>';
-      if (optionsMap[user][type]) {
-        optionsMap[user][type].forEach(i => itemSelect.add(new Option(i, i)));
-      }
-      checkValueType();
+    // 防止 guest 模式下找不到 checked radio 導致噴錯
+    const userRadio = document.querySelector('input[name="user"]:checked');
+    const user = (userKey === "guest") ? "guest" : (userRadio ? userRadio.value : "卉");
+    
+    const type = document.getElementById('typeSelect').value;
+    const itemSelect = document.getElementById('itemSelect');
+    itemSelect.innerHTML = '<option value="">-- 選擇項目 --</option>';
+
+    // 同樣判定選單來源
+    const templateUser = (user === "guest") ? "卉" : user;
+
+    if (optionsMap[templateUser] && optionsMap[templateUser][type]) {
+        optionsMap[templateUser][type].forEach(i => itemSelect.add(new Option(i, i)));
     }
+    checkValueType();
+}
 
     function checkValueType() {
       const type = document.getElementById('typeSelect').value;
@@ -294,10 +316,14 @@
     }
 
 
-                 function submitForm() {
-  if (!userKey) { checkAccess(); return; }
-  const user = document.querySelector('input[name="user"]:checked').value;
-  const submitBtn = document.querySelector('button[onclick="submitForm()"]');
+  function submitForm() {
+    if (!userKey) { checkAccess(); return; }
+    
+    // 修正身分抓取邏輯
+    const userRadio = document.querySelector('input[name="user"]:checked');
+    const user = (userKey === "guest") ? "guest" : (userRadio ? userRadio.value : "卉");
+    
+    const submitBtn = document.querySelector('button[onclick="submitForm()"]');
   
   if (user === '姐') {
     const inputPwd = document.getElementById('passwordInput').value;
@@ -336,26 +362,34 @@
     const giftUrl = giftResponse.replace(/"/g, "").trim();
     const isImage = giftUrl.startsWith("http");
 
-    // --- 整合後的 Slot 與 GIF 邏輯 ---
-    let triggerSlot = false;
+let triggerSlot = false;
+    
+    // --- 1. 判定誰要進拉霸機 ---
     if (user === "姐") {
-      triggerSlot = true; // 姊姊存檔必定抽獎
-    } else if (user === "卉" && type === "運動") {
-      if (Math.random() < 0.5) triggerSlot = true; // 卉卉運動 50% 機率抽獎
+      triggerSlot = true; // 姐：不論類別，100% 拉霸
+    } else if ((user === "卉" || user === "guest") && type === "運動") {
+      // 卉與訪客：運動類別 50% 機率拉霸
+      if (Math.random() < 0.5) triggerSlot = true;
     }
+    // 註：卉與訪客的其他類別，或運動類別剩下的 50%，triggerSlot 會是 false
+
+    // --- 2. 執行顯示 (絕對沒有「存檔成功」) ---
+    alert("🍎 發現掉落物！"); // 大家都會彈出這一句
 
     if (triggerSlot) {
-      alert("🍎 發現掉落物！(啟動抽獎機)");
+      // 進入拉霸機模式
       openSlotModal();
-    } else if (user === "卉" && isImage) {
-      // 如果沒抽到 Slot，但有拿到 GIF 網址
-      document.getElementById('luckyGif').src = giftUrl;
-      document.getElementById('giftArea').classList.remove('hidden');
-      alert("🍎 發現掉落物！");
     } else {
-      alert("存檔成功！");
+      // 進入 GIF 模式 (包含：卉/訪客的非運動類別、運動類別沒抽中拉霸的 50%)
+      if (isImage) {
+        document.getElementById('luckyGif').src = giftUrl;
+        document.getElementById('giftArea').classList.remove('hidden');
+      } else {
+        // 如果 GAS 剛好沒傳圖片網址，強行開拉霸當作驚喜，確保不漏氣
+        openSlotModal(); 
+      }
     }
-
+    
     clearFormAfterSubmit();
     refreshData(); // 更新主介面數據與寶箱
   }).catch(err => {
@@ -394,14 +428,19 @@
     }
 
     window.addEventListener('message', function(e) {
-      if (e.data === 'closeModal') {
-        closeSlotModal();
-        return;
-      }
+  if (e.data === 'closeModal') {
+    closeSlotModal();
+    return;
+  }
 
-      const currentUser = document.querySelector('input[name="user"]:checked').value;
-      const now = new Date();
-      const timeStr = `${now.getHours()}:${now.getMinutes().toString().padStart(2,'0')}`;
+  // --- 修正點：相容訪客模式，不直接抓 Radio ---
+  const userRadio = document.querySelector('input[name="user"]:checked');
+  const currentUser = (userKey === "guest") ? "guest" : (userRadio ? userRadio.value : "卉");
+  // ------------------------------------------
+
+  const now = new Date();
+  const timeStr = `${now.getHours()}:${now.getMinutes().toString().padStart(2,'0')}`;
+  
       
       let logMsg = "";
       let bonusValue = 0; 
@@ -467,16 +506,48 @@
 }, false);
 
     window.onload = () => { 
-      switchUser('卉'); 
-      if(userKey) {
-        refreshData();
-      } else {
-        checkAccess();
-      }
-      updateTimer(); 
-      setRandomPlaceholder();
-      setInterval(updateTimer, 60000);
-    };
+       // 1. 訪客專屬 UI 處理
+       if(userKey === "guest") {
+         const userSelectDiv = document.querySelector('.user-select');
+         // 把切換按鈕換成單純的文字顯示，防止訪客誤點切換到姊姊模式
+         if(userSelectDiv) userSelectDiv.innerHTML = "<span>角色: 訪客冒險者 (Guest)</span>";
+    
+         // 2. 【核心優化】：延遲 0.5 秒再跳彈窗，避免卡住畫面渲染
+         setTimeout(showGuestWelcome, 500);
+       }
+
+       // 3. 執行初始化：根據身分切換選單內容
+       switchUser(userKey === "guest" ? 'guest' : '卉'); 
+
+       // 4. 判斷是否要讀取資料
+       if(userKey) {
+         refreshData();
+       } else {
+         checkAccess();
+       }
+
+       // 5. 啟動計時器與隨機文字
+       updateTimer(); 
+       setRandomPlaceholder();
+       setInterval(updateTimer, 60000);
+     };
+
+    // 訪客歡迎彈窗函式
+function showGuestWelcome() {
+  alert(
+    "🎮 歡迎來到麥塊冒險【訪客模式】\n" +
+    "━━━━━━━━━━━━━━━━\n" +
+    "✨ 模式特點：\n" +
+    "● 快速體驗：套用「卉」的完整運動與 3C 換算功能。\n" +
+    "● 隱私保護：重新整理或關閉頁面後，紀錄將自動清空。\n" +
+    "\n" +
+    "🎁 冒險提示：\n" +
+    "● 抽獎機制：輸入「運動」類別時，有 50% 機率觸發掉落物抽獎！\n" +
+    "● 隱藏彩蛋：連續點擊上方「🔋 3C 能量」區域 5 下，可開啟 Creeper 小遊戲！\n" +
+    "━━━━━━━━━━━━━━━━\n" +
+    "祝你冒險愉快！"
+  );
+}
   </script>
 </body>
 </html>

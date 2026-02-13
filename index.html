@@ -149,16 +149,41 @@
 
     let userKey = localStorage.getItem('mc_access_key') || "";
 
-    function checkAccess() {
-      if (!userKey) {
-        const input = prompt("請輸入通關密語以連結試算表：");
-        if (input) {
-          userKey = input;
-          localStorage.setItem('mc_access_key', input);
-          refreshData();
-        }
-      }
+    window.onload = () => { 
+  // 1. 優先確認目前的 userKey 身分
+  const isGuest = (userKey === "guest");
+
+  // 2. 啟動計時器與隨機文字
+  updateTimer(); 
+  setRandomPlaceholder();
+  setInterval(updateTimer, 60000);
+
+  // 3. 處理訪客專屬 UI
+  if (isGuest) {
+    const userSelectDiv = document.querySelector('.user-select');
+    // 強制把切換區域換成文字，避免重新整理後跳回 Radio Button
+    if (userSelectDiv) {
+      userSelectDiv.innerHTML = "<span>角色: 訪客冒險者 (Guest)</span>";
     }
+    
+    // 如果是剛輸入密碼進來的（通常會有一個標記，或是判斷沒彈過歡迎詞）
+    // 為了避免每次重新整理都跳歡迎詞，可以用 sessionStorage 做個小標記
+    if (!sessionStorage.getItem('guest_welcomed')) {
+      setTimeout(showGuestWelcome, 500);
+      sessionStorage.setItem('guest_welcomed', 'true');
+    }
+  }
+
+  // 4. 執行初始化：根據身分切換選單內容
+  switchUser(isGuest ? 'guest' : '卉'); 
+
+  // 5. 讀取資料
+  if (userKey) {
+    refreshData();
+  } else {
+    checkAccess();
+  }
+};
 
     const gasUrl = "https://script.google.com/macros/s/AKfycby8MaeORmgHynbc4qTnjUUCyn12NWZYJP6HEhCZ1wEsXOX3fnTlQT-LP9l8FRNQf4cG/exec"; 
     const openingDate = new Date("2026-02-23");
@@ -509,26 +534,41 @@ let triggerSlot = false;
   }
 }, false);
 
-    window.onload = () => { 
-       // 1. 訪客專屬 UI 處理
-       if(userKey === "guest") {
-         const userSelectDiv = document.querySelector('.user-select');
-         // 把切換按鈕換成單純的文字顯示，防止訪客誤點切換到姊姊模式
-         if(userSelectDiv) userSelectDiv.innerHTML = "<span>角色: 訪客冒險者 (Guest)</span>";
+window.onload = () => { 
+  // 1. 優先確認目前的 userKey 身分
+  const isGuest = (userKey === "guest");
+
+  // 2. 啟動計時器與隨機文字
+  updateTimer(); 
+  setRandomPlaceholder();
+  setInterval(updateTimer, 60000);
+
+  // 3. 處理訪客專屬 UI
+  if (isGuest) {
+    const userSelectDiv = document.querySelector('.user-select');
+    // 強制把切換區域換成文字，避免重新整理後跳回 Radio Button
+    if (userSelectDiv) {
+      userSelectDiv.innerHTML = "<span>角色: 訪客冒險者 (Guest)</span>";
+    }
     
-         // 2. 【核心優化】：延遲 0.5 秒再跳彈窗，避免卡住畫面渲染
-         setTimeout(showGuestWelcome, 500);
-       }
+    // 如果是剛輸入密碼進來的（通常會有一個標記，或是判斷沒彈過歡迎詞）
+    // 為了避免每次重新整理都跳歡迎詞，可以用 sessionStorage 做個小標記
+    if (!sessionStorage.getItem('guest_welcomed')) {
+      setTimeout(showGuestWelcome, 500);
+      sessionStorage.setItem('guest_welcomed', 'true');
+    }
+  }
 
-       // 3. 執行初始化：根據身分切換選單內容
-       switchUser(userKey === "guest" ? 'guest' : '卉'); 
+  // 4. 執行初始化：根據身分切換選單內容
+  switchUser(isGuest ? 'guest' : '卉'); 
 
-       // 4. 判斷是否要讀取資料
-       if(userKey) {
-         refreshData();
-       } else {
-         checkAccess();
-       }
+  // 5. 讀取資料
+  if (userKey) {
+    refreshData();
+  } else {
+    checkAccess();
+  }
+};
 
        // 5. 啟動計時器與隨機文字
        updateTimer(); 

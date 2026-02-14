@@ -137,7 +137,7 @@
     </div>
   </div>
 
-  <div id="creeperModal" class="modal-overlay">
+  <div id="creeperModal" class="modal-overlay" onclick="handleCreeperOutsideClick(event)">
     <div class="modal-content">
       <span class="close-btn" onclick="closeCreeperModal()">&times;</span>
       <iframe src="https://mistyflow66.github.io/creeper/" width="100%" height="400px" frameborder="0"></iframe>
@@ -198,10 +198,26 @@
       modal.style.display = 'flex';
     }
 
-    function closeCreeperModal() {
-      const modal = document.getElementById('creeperModal');
-      if (modal) modal.style.display = 'none';
-    }
+    // 原本的關閉函式（保持單純，供打叉按鈕使用）
+function closeCreeperModal() {
+  const modal = document.getElementById('creeperModal');
+  if (modal) {
+    modal.style.display = 'none';
+    // 建議同時清除 iframe 的 src，避免苦力怕在後台繼續發出聲音或運算
+    const iframe = modal.querySelector('iframe');
+    if (iframe) iframe.src = ""; 
+  }
+}
+
+// 新增：專門處理點擊外部遮罩的邏輯
+function handleCreeperOutsideClick(event) {
+  const modal = document.getElementById('creeperModal');
+  // 核心邏輯：只有點到「黑色遮罩」本人，才觸發關閉
+  // 如果點到的是內層的 modal-content 或 iframe，則不反應
+  if (event.target === modal) {
+    closeCreeperModal();
+  }
+}
 
     function checkAccess() {
       let inputKey = prompt("請輸入存取密碼 (訪客請輸入 'guest')：", "");

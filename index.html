@@ -150,7 +150,7 @@
     let userKey = localStorage.getItem('mc_access_key') || "";
 
     const gasUrl = "https://script.google.com/macros/s/AKfycby8MaeORmgHynbc4qTnjUUCyn12NWZYJP6HEhCZ1wEsXOX3fnTlQT-LP9l8FRNQf4cG/exec";
-    const openingDate = new Date("2026-02-23");
+    const openingDate = new Date("2026-06-15");
     const optionsMap = {
       "卉": { "運動": ["跳繩", "跑步", "仰臥起坐"], "3C": ["看電視", "用手機", "玩電腦"], "規劃": ["閱讀", "做小書", "練習英文", "其他"] },
       "姐": { "運動": ["跳繩", "跑步", "仰臥起坐"], "3C": ["看電視", "用手機", "玩電腦"], "獎勵": ["自己起床", "GOOD", "加分", "扣分"] },
@@ -177,7 +177,7 @@
       const days = Math.floor(diff / (1000 * 60 * 60 * 24));
       const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
       const timerEl = document.getElementById('timer');
-      if (timerEl) timerEl.innerText = `更新：${now.getMonth()+1}/${now.getDate()} ${now.getHours()}:${now.getMinutes().toString().padStart(2,'0')} | 距離開學：${days} 天 ${hours} 時`;
+      if (timerEl) timerEl.innerText = `更新：${now.getMonth()+1}/${now.getDate()} ${now.getHours()}:${now.getMinutes().toString().padStart(2,'0')} | 距離畢業：${days} 天 ${hours} 時`;
     }
 
     function handleDashboardClick() {

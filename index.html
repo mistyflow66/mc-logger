@@ -52,23 +52,23 @@
     .img-wrapper { position: relative; width: 100%; aspect-ratio: 1 / 1; display: flex; align-items: center; justify-content: center; overflow: visible; animation: mcGentleFloat 4s ease-in-out infinite; will-change: transform; z-index: 1; }
     .chest-img { width: 100%; height: 100%; object-fit: contain; image-rendering: pixelated; position: relative; z-index: 2; /* 圖片夾在中間 */ }
 
-    /* 全區域像素粒子樣式 */
+    /* 全區域像素粒子樣式：更小、在背景 */
     .pixel-particle {
       position: absolute;
-      width: 6px;
-      height: 6px;
+      width: 3px;
+      height: 3px;
       pointer-events: none;
       opacity: 0;
-      animation: floatUp 4s linear infinite;
+      animation: floatUp 5s linear infinite;
       image-rendering: pixelated;
-      z-index: 3;
+      z-index: 0; /* 確保在圖片後方 */
     }
 
     @keyframes floatUp {
-      0% { opacity: 0; transform: translateY(20px) translateX(0); }
-      20% { opacity: 0.8; } /* 隨機淡入 */
-      80% { opacity: 0.6; } 
-      100% { transform: translateY(-50px) translateX(10px); opacity: 0; } /* 往上並帶有一點水平偏移 */
+      0% { opacity: 0; transform: translateY(20px); }
+      20% { opacity: 0.5; } /* 柔和淡入 */
+      80% { opacity: 0.3; } 
+      100% { transform: translateY(-80px); opacity: 0; }
     }
     .pagination { display: flex; justify-content: space-between; align-items: center; padding: 10px 5px 5px 5px; font-size: 13px; color: #aaa; }
     .page-btn { background: none; border: none; color: #55efc4; text-decoration: underline; padding: 5px; font-size: 13px; width: auto; box-shadow: none; cursor: pointer; }
@@ -507,18 +507,12 @@ function handleCreeperOutsideClick(event) {
       for (let i = 0; i < 40; i++) {
         const span = document.createElement('span');
         span.className = 'pixel-particle';
-        
-        // 全區域隨機座標 (容器內任何一點)
         span.style.top = Math.random() * 100 + '%';
         span.style.left = Math.random() * 100 + '%';
-        
-        // 隨機的時間與延遲，讓飛舞看起來交錯
-        span.style.animationDuration = (Math.random() * 3 + 2) + 's';
+        span.style.animationDuration = (Math.random() * 3 + 3) + 's'; // 調整速度更平滑
         span.style.animationDelay = Math.random() * 4 + 's';
-        
         const colors = ['#FFD700', '#FFFFFF', '#ADD8E6'];
         span.style.background = colors[Math.floor(Math.random() * colors.length)];
-        
         wrapper.appendChild(span);
       }
     }

@@ -49,8 +49,8 @@
 
 
     /* 特效容器設定 */
-    .img-wrapper { position: relative; width: 100%; aspect-ratio: 1 / 1; display: flex; align-items: center; justify-content: center; overflow: visible; animation: mcGentleFloat 4s ease-in-out infinite; will-change: transform; z-index: 1; }
-    .chest-img { width: 100%; height: 100%; object-fit: contain; image-rendering: pixelated; position: relative; z-index: 2; /* 圖片夾在中間 */ }
+    .img-wrapper { position: relative; width: 100%; aspect-ratio: 1 / 1; display: flex; align-items: center; justify-content: center; overflow: hidden !important; animation: mcGentleFloat 4s ease-in-out infinite; will-change: transform; z-index: 1; }
+    .chest-img { width: 90%; height: 90%; object-fit: contain; image-rendering: pixelated; position: relative; z-index: 2; margin: auto; /* 圖片夾在中間 */ }
 
     /* 全區域像素粒子樣式：與像素藝術一致的大小 */
     .pixel-particle {

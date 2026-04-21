@@ -40,19 +40,43 @@
       display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; 
       background: #1e1e1e; padding: 10px; margin-top: 5px; border-radius: 5px; 
     }
-    /* 動畫：呼吸浮動與閃爍 */
-    @keyframes mcGentleFloat { 0%, 100% { transform: translateY(0px); } 50% { transform: translateY(-5px); } }
-    @keyframes pixelSparkleA { 0%, 100% { opacity: 0.5; transform: scale(1); } 50% { opacity: 1; transform: scale(1.5); } }
-    @keyframes pixelSparkleB { 0%, 100% { opacity: 0.4; transform: scale(1); } 50% { opacity: 1; transform: scale(1.5); } }
+    /* 1. 溫和呼吸浮動動畫 (保持不變) */
+    @keyframes mcGentleFloat { 0%, 100% { transform: translateY(0px); } 50% { transform: translateY(-2px); } }
 
-    /* 特效容器：僅用於抽獎結果大圖 */
-    .img-wrapper { position: relative; width: 100%; aspect-ratio: 1 / 1; display: flex; align-items: center; justify-content: center; overflow: visible; animation: mcGentleFloat 3s ease-in-out infinite; z-index: 1; }
+    /* 2. 精靈光點飄散動畫 (從下往上移動並消失) */
+    @keyframes pixelSparkleRiseA {
+      0% { opacity: 0; transform: translateY(10px) scale(0.8); }
+      20% { opacity: 0.8; transform: translateY(0px) scale(1); }
+      80% { opacity: 0.6; transform: translateY(-20px) scale(1.1); }
+      100% { opacity: 0; transform: translateY(-40px) scale(1.2); }
+    }
+    @keyframes pixelSparkleRiseB {
+      0% { opacity: 0; transform: translateY(15px) scale(0.6); }
+      30% { opacity: 1; transform: translateY(0px) scale(1.2); }
+      70% { opacity: 0.8; transform: translateY(-15px) scale(1.1); }
+      100% { opacity: 0; transform: translateY(-35px) scale(1.3); }
+    }
+
+    /* 特效容器與圖片設定 */
+    .img-wrapper { position: relative; width: 100%; aspect-ratio: 1 / 1; display: flex; align-items: center; justify-content: center; overflow: visible; animation: mcGentleFloat 4s ease-in-out infinite; z-index: 1; }
     .chest-img { width: 100%; height: 100%; object-fit: contain; image-rendering: pixelated; position: relative; z-index: 2; }
 
-    /* 像素光點：::before (黃色後景) 與 ::after (白色前景) */
-    .img-wrapper::before, .img-wrapper::after { content: ""; position: absolute; width: 4px; height: 4px; background: transparent; pointer-events: none; }
-    .img-wrapper::before { box-shadow: 20px 20px rgba(255, 235, 59, 0.8), -20px -20px rgba(255, 235, 59, 0.8), 20px -20px rgba(255, 235, 59, 0.8); animation: pixelSparkleA 2s ease-in-out infinite; z-index: 1; }
-    .img-wrapper::after { box-shadow: -20px 20px rgba(255, 255, 255, 0.9), 0px -25px rgba(255, 255, 255, 0.9), 25px 0px rgba(255, 255, 255, 0.9); animation: pixelSparkleB 2s ease-in-out infinite; z-index: 3; }
+    /* 通用像素單位 (與 Habitat 原始像素一致) */
+    .img-wrapper::before, .img-wrapper::after { content: ""; position: absolute; width: 3px; height: 3px; background: transparent; pointer-events: none; }
+
+    /* 第一組：黃色/金色光點 (背景漂浮 - 較慢) */
+    .img-wrapper::before {
+      box-shadow: 10px 10px rgba(255, 235, 59, 0.7), -15px -10px rgba(255, 235, 59, 0.5), -12px 15px rgba(255, 235, 59, 0.6);
+      animation: pixelSparkleRiseA 3s ease-in-out infinite;
+      z-index: 1;
+    }
+
+    /* 第二組：白色/淡黃色光點 (前景閃爍 - 較快) */
+    .img-wrapper::after {
+      box-shadow: 15px -5px rgba(255, 255, 255, 0.6), -10px -15px rgba(255, 255, 255, 0.4), 8px 12px rgba(255, 255, 255, 0.5);
+      animation: pixelSparkleRiseB 2.5s ease-in-out infinite;
+      z-index: 3;
+    }
     .pagination { display: flex; justify-content: space-between; align-items: center; padding: 10px 5px 5px 5px; font-size: 13px; color: #aaa; }
     .page-btn { background: none; border: none; color: #55efc4; text-decoration: underline; padding: 5px; font-size: 13px; width: auto; box-shadow: none; cursor: pointer; }
     .page-btn:disabled { color: #555; text-decoration: none; cursor: not-allowed; }

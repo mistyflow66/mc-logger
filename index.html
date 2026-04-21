@@ -40,59 +40,36 @@
       display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; 
       background: #1e1e1e; padding: 10px; margin-top: 5px; border-radius: 5px; 
     }
-    /* 1. 圖片自身溫和呼吸浮動 (保持不變) */
-    @keyframes mcGentleFloat { 0%, 100% { transform: translateY(0px); } 50% { transform: translateY(-5px); } }
-
-    /* 飄散動畫：從中心向外放射狀上升 */
-    @keyframes pixelSparkleRise {
-      0% { opacity: 0; transform: translate(-50%, -50%) scale(0.5); }
-      20% { opacity: 1; transform: translate(-50%, -100%) scale(1.2); }
-      100% { opacity: 0; transform: translate(-50%, -400%) scale(0.5); }
+    /* 1. 圖片自身溫和呼吸浮動 (大幅度修正) */
+    @keyframes mcGentleFloat { 
+      0%, 100% { transform: translateY(0px); } 
+      50% { transform: translateY(-5px); } /* 浮動幅度增加到 5px */
     }
 
-    /* 容器：確保不被裁切 */
-    .img-wrapper {
-      position: relative;
-      width: 100%;
-      aspect-ratio: 1 / 1;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      overflow: visible !important;
-      animation: mcGentleFloat 4s ease-in-out infinite;
-    }
-    .chest-img {
-      width: 100%;
-      height: 100%;
-      object-fit: contain;
-      image-rendering: pixelated;
-      position: relative;
-      z-index: 2;
+    /* 2. 無限循環粒子系統動畫 */
+    @keyframes rise {
+      0% { transform: translateY(0); opacity: 0; }
+      10% { opacity: 0.8; } /* 快速淡入 */
+      90% { opacity: 0.4; } /* 緩慢淡出 */
+      100% { transform: translateY(-120px); opacity: 0; } /* 飄得更高 */
     }
 
-    /* 光點生成器：以中心為原點 */
-    .img-wrapper::before, .img-wrapper::after {
-      content: "";
+    /* 特效容器設定 */
+    .img-wrapper { position: relative; width: 100%; aspect-ratio: 1 / 1; display: flex; align-items: center; justify-content: center; overflow: visible; animation: mcGentleFloat 4s ease-in-out infinite; will-change: transform; z-index: 1; }
+    .chest-img { width: 100%; height: 100%; object-fit: contain; image-rendering: pixelated; position: relative; z-index: 2; /* 圖片夾在中間 */ }
+
+    /* 粒子樣式 */
+    .particle {
       position: absolute;
-      top: 50%; left: 50%;
-      width: 4px; height: 4px;
-      background: transparent;
+      bottom: 0;
+      background: white; /* 預設白色 */
+      border-radius: 50%;
       pointer-events: none;
+      opacity: 0;
+      animation: rise 3s linear infinite;
     }
-
-    /* 背景黃光點 */
-    .img-wrapper::before {
-      box-shadow: -20px -20px #ffeb3b, 20px -20px #ffeb3b, -20px 20px #ffeb3b, 20px 20px #ffeb3b;
-      animation: pixelSparkleRise 3s ease-in-out infinite;
-      z-index: 1;
-    }
-
-    /* 前景白光點 */
-    .img-wrapper::after {
-      box-shadow: 0px -30px #ffffff, 30px 0px #ffffff, 0px 30px #ffffff, -30px 0px #ffffff;
-      animation: pixelSparkleRise 2.5s ease-in-out infinite;
-      z-index: 3;
-    }
+    /* 每隔幾個變成金色，增加層次感 */
+    .particle:nth-child(2n) { background: #FFD700; }
     .pagination { display: flex; justify-content: space-between; align-items: center; padding: 10px 5px 5px 5px; font-size: 13px; color: #aaa; }
     .page-btn { background: none; border: none; color: #55efc4; text-decoration: underline; padding: 5px; font-size: 13px; width: auto; box-shadow: none; cursor: pointer; }
     .page-btn:disabled { color: #555; text-decoration: none; cursor: not-allowed; }
@@ -471,6 +448,8 @@ function handleCreeperOutsideClick(event) {
             if (giftArea) {
               if (giftUrl.toLowerCase().includes('.png')) {
                 giftArea.innerHTML = `<div style="color:#ffeb3b;">🍎 發現掉落物！</div><div class="img-wrapper"><img src="${giftUrl}" class="chest-img"></div>`;
+                const wrapper = giftArea.querySelector('.img-wrapper');
+                if (wrapper) addParticles(wrapper);
               } else {
                 giftArea.innerHTML = `<div style="color:#ffeb3b;">🍎 發現掉落物！</div><img id="luckyGif" src="${giftUrl}" style="width:100%; border-radius:8px; object-fit:contain;">`;
               }
@@ -522,6 +501,22 @@ function handleCreeperOutsideClick(event) {
     function closeSlotModal() {
       const modal = document.getElementById('slotModal');
       if (modal) modal.style.display = 'none';
+    }
+
+    function addParticles(wrapper) {
+      for (let i = 0; i < 25; i++) { // 25 個粒子
+        const span = document.createElement('span');
+        span.className = 'particle';
+        // 隨機初始位置與時間
+        span.style.left = Math.random() * 100 + '%';
+        span.style.animationDuration = (Math.random() * 2 + 2) + 's'; // 2-4秒
+        span.style.animationDelay = Math.random() * 3 + 's';
+        // 隨機大小
+        const size = Math.random() * 3 + 2; 
+        span.style.width = size + 'px';
+        span.style.height = size + 'px';
+        wrapper.appendChild(span);
+      }
     }
 
     window.addEventListener('message', function(e) {

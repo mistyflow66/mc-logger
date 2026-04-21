@@ -41,23 +41,16 @@
       background: #1e1e1e; padding: 10px; margin-top: 5px; border-radius: 5px; 
     }
     /* 1. 圖片自身溫和呼吸浮動 (保持不變) */
-    @keyframes mcGentleFloat { 0%, 100% { transform: translateY(0px); } 50% { transform: translateY(-2px); } }
+    @keyframes mcGentleFloat { 0%, 100% { transform: translateY(0px); } 50% { transform: translateY(-5px); } }
 
-    /* 2. 精靈光點飄散動畫 (由下往上移動並消失) */
-    @keyframes pixelSparkleRiseA {
-      0% { opacity: 0; transform: translateY(10px); }
-      20% { opacity: 1; transform: translateY(0px); }
-      80% { opacity: 0.6; transform: translateY(-30px); }
-      100% { opacity: 0; transform: translateY(-60px); }
-    }
-    @keyframes pixelSparkleRiseB {
-      0% { opacity: 0; transform: translateY(20px); }
-      30% { opacity: 0.9; transform: translateY(0px); }
-      70% { opacity: 0.7; transform: translateY(-20px); }
-      100% { opacity: 0; transform: translateY(-50px); }
+    /* 飄散動畫：從中心向外放射狀上升 */
+    @keyframes pixelSparkleRise {
+      0% { opacity: 0; transform: translate(-50%, -50%) scale(0.5); }
+      20% { opacity: 1; transform: translate(-50%, -100%) scale(1.2); }
+      100% { opacity: 0; transform: translate(-50%, -400%) scale(0.5); }
     }
 
-    /* 特效容器設定 */
+    /* 容器：確保不被裁切 */
     .img-wrapper {
       position: relative;
       width: 100%;
@@ -65,10 +58,8 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      overflow: visible;
+      overflow: visible !important;
       animation: mcGentleFloat 4s ease-in-out infinite;
-      will-change: transform;
-      z-index: 1;
     }
     .chest-img {
       width: 100%;
@@ -79,36 +70,27 @@
       z-index: 2;
     }
 
-    /* 像素光點定義：關鍵修改，擴大產生區域 */
+    /* 光點生成器：以中心為原點 */
     .img-wrapper::before, .img-wrapper::after {
       content: "";
       position: absolute;
-      bottom: 0px;
-      left: 0px;
-      width: 100%;
-      height: 10px;
+      top: 50%; left: 50%;
+      width: 4px; height: 4px;
       background: transparent;
       pointer-events: none;
     }
 
-    /* 第一組：黃色/金色光點 (背景深度 - 較慢) */
+    /* 背景黃光點 */
     .img-wrapper::before {
-      box-shadow:
-        10% -10px rgba(255, 235, 59, 0.7),
-        90% -15px rgba(255, 235, 59, 0.5),
-        50% -5px rgba(255, 235, 59, 0.6);
-      animation: pixelSparkleRiseA 4s ease-in-out infinite;
+      box-shadow: -20px -20px #ffeb3b, 20px -20px #ffeb3b, -20px 20px #ffeb3b, 20px 20px #ffeb3b;
+      animation: pixelSparkleRise 3s ease-in-out infinite;
       z-index: 1;
     }
 
-    /* 第二組：白色/淡黃色光點 (前景閃爍 - 較快) */
+    /* 前景白光點 */
     .img-wrapper::after {
-      box-shadow:
-        20% -20px rgba(255, 255, 255, 0.6),
-        80% -10px rgba(255, 255, 255, 0.4),
-        40% -25px rgba(255, 255, 255, 0.5),
-        60% -15px rgba(255, 255, 255, 0.7);
-      animation: pixelSparkleRiseB 3s ease-in-out infinite;
+      box-shadow: 0px -30px #ffffff, 30px 0px #ffffff, 0px 30px #ffffff, -30px 0px #ffffff;
+      animation: pixelSparkleRise 2.5s ease-in-out infinite;
       z-index: 3;
     }
     .pagination { display: flex; justify-content: space-between; align-items: center; padding: 10px 5px 5px 5px; font-size: 13px; color: #aaa; }

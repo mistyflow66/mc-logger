@@ -40,7 +40,19 @@
       display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; 
       background: #1e1e1e; padding: 10px; margin-top: 5px; border-radius: 5px; 
     }
-    .chest-img { width: 100%; aspect-ratio: 1 / 1; object-fit: cover; border: 2px solid #555; border-radius: 4px; }
+    /* 動畫：呼吸浮動與閃爍 */
+    @keyframes mcGentleFloat { 0%, 100% { transform: translateY(0px); } 50% { transform: translateY(-2px); } }
+    @keyframes pixelSparkleA { 0%, 100% { opacity: 0.3; transform: scale(1); } 50% { opacity: 1; transform: scale(1.1); } }
+    @keyframes pixelSparkleB { 0%, 100% { opacity: 0.1; transform: scale(1.1); } 50% { opacity: 0.7; transform: scale(1); } }
+
+    /* 特效容器：僅用於抽獎結果大圖 */
+    .img-wrapper { position: relative; width: 100%; aspect-ratio: 1 / 1; display: flex; align-items: center; justify-content: center; overflow: visible; animation: mcGentleFloat 4s ease-in-out infinite; z-index: 1; }
+    .chest-img { width: 100%; height: 100%; object-fit: contain; image-rendering: pixelated; position: relative; z-index: 2; }
+
+    /* 像素光點：::before (黃色後景) 與 ::after (白色前景) */
+    .img-wrapper::before, .img-wrapper::after { content: ""; position: absolute; width: 2.5px; height: 2.5px; background: transparent; pointer-events: none; }
+    .img-wrapper::before { box-shadow: 10px 10px rgba(255, 235, 59, 0.6), -15px -10px rgba(255, 235, 59, 0.4), -12px 15px rgba(255, 235, 59, 0.7); animation: pixelSparkleA 2.5s ease-in-out infinite; z-index: 1; }
+    .img-wrapper::after { box-shadow: 15px -5px rgba(255, 255, 255, 0.5), -10px -15px rgba(255, 255, 255, 0.3), 8px 12px rgba(255, 255, 255, 0.6); animation: pixelSparkleB 3.5s ease-in-out infinite; z-index: 3; }
     .pagination { display: flex; justify-content: space-between; align-items: center; padding: 10px 5px 5px 5px; font-size: 13px; color: #aaa; }
     .page-btn { background: none; border: none; color: #55efc4; text-decoration: underline; padding: 5px; font-size: 13px; width: auto; box-shadow: none; cursor: pointer; }
     .page-btn:disabled { color: #555; text-decoration: none; cursor: not-allowed; }
@@ -326,7 +338,11 @@ function handleCreeperOutsideClick(event) {
       if (currentPage < 1) currentPage = 1;
       const startIndex = (currentPage - 1) * itemsPerPage;
       const pageImages = allChestImages.slice(startIndex, startIndex + itemsPerPage);
-      gallery.innerHTML = pageImages.map(url => `<img src="${url}" class="chest-img">`).join("");
+      gallery.innerHTML = pageImages.map(url => `
+    <div style="width:100%; aspect-ratio:1/1; display:flex; align-items:center; justify-content:center;">
+      <img src="${url}" style="width:100%; height:100%; object-fit:contain; image-rendering:pixelated;">
+    </div>
+  `).join("");
       if (allChestImages.length > itemsPerPage) {
         controls.classList.remove('hidden');
         const pageInfo = document.getElementById('pageInfo');
@@ -390,8 +406,8 @@ function handleCreeperOutsideClick(event) {
       const url = `${gasUrl}?action=addData&key=${encodeURIComponent(userKey)}&user=${encodeURIComponent(user)}&category=${encodeURIComponent(type)}&item=${encodeURIComponent(item)}&value=${encodeURIComponent(finalVal)}&otherNote=${encodeURIComponent(otherNote)}&note=${encodeURIComponent(note)}`;
 
       const giftArea = document.getElementById('giftArea');
-      const luckyGif = document.getElementById('luckyGif');
       if (giftArea) giftArea.classList.add('hidden');
+      const luckyGif = document.getElementById('luckyGif');
       if (luckyGif) luckyGif.src = "";
 
       fetch(url).then(res => res.text()).then(giftResponse => {
@@ -412,8 +428,14 @@ function handleCreeperOutsideClick(event) {
           openSlotModal();
         } else {
           if (isImage) {
-            if (luckyGif) luckyGif.src = giftUrl;
-            if (giftArea) giftArea.classList.remove('hidden');
+            if (giftArea) {
+              if (giftUrl.toLowerCase().includes('.png')) {
+                giftArea.innerHTML = `<div style="color:#ffeb3b;">🍎 發現掉落物！</div><div class="img-wrapper"><img src="${giftUrl}" class="chest-img"></div>`;
+              } else {
+                giftArea.innerHTML = `<div style="color:#ffeb3b;">🍎 發現掉落物！</div><img id="luckyGif" src="${giftUrl}" style="width:100%; border-radius:8px; object-fit:contain;">`;
+              }
+              giftArea.classList.remove('hidden');
+            }
           } else {
             openSlotModal();
           }

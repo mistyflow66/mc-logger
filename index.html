@@ -51,6 +51,7 @@
     /* 特效容器設定 */
     .img-wrapper { position: relative; width: 100%; aspect-ratio: 1 / 1; display: flex; align-items: center; justify-content: center; overflow: hidden !important; animation: mcGentleFloat 4s ease-in-out infinite; will-change: transform; z-index: 1; }
     .chest-img { width: 90%; height: 90%; object-fit: contain; image-rendering: pixelated; position: relative; z-index: 2; margin: auto; /* 圖片夾在中間 */ }
+    .img-fallback-text { color:#999; font-size:11px; text-align:center; }
 
     /* 全區域像素粒子樣式：與像素藝術一致的大小 */
     .pixel-particle {
@@ -187,6 +188,7 @@
     };
 
     const randomPlaceholders = ["寫點悄悄話...", "還在ㄊㄟ", "現在的心情...", "(⁠・⁠∀⁠・⁠)", "(⁠ㆁ⁠ω⁠ㆁ⁠)", "(⁠◍⁠•⁠ᴗ⁠•⁠◍⁠)", "今天運動了嗎？"];
+    const FALLBACK_IMAGE_URL = "https://meee.com.tw/x9oTG9x.png";
     let allChestImages = [];
     let currentPage = 1;
     const itemsPerPage = 10;
@@ -341,6 +343,57 @@ function handleCreeperOutsideClick(event) {
         .catch(err => console.error("抓取資料失敗:", err));
     }
 
+    function appendSafeImage(wrapper, url, options = {}) {
+      const {
+        className = 'chest-img',
+        width = 256,
+        height = 256,
+        onLoaded = null,
+        onFatal = null
+      } = options;
+
+      wrapper.style.opacity = '0';
+
+      const img = new Image();
+      img.src = url;
+      img.className = className;
+      img.width = width;
+      img.height = height;
+      img.decoding = 'async';
+      img.loading = 'lazy';
+
+      let hasRetried = false;
+
+      img.onload = () => {
+        wrapper.style.opacity = '1';
+        if (typeof onLoaded === 'function') onLoaded(img);
+      };
+
+      img.onerror = () => {
+        if (!hasRetried && img.src !== FALLBACK_IMAGE_URL) {
+          hasRetried = true;
+          img.src = FALLBACK_IMAGE_URL;
+          return;
+        }
+
+        console.error('圖片載入失敗，網址：', url);
+        img.style.display = 'none';
+        wrapper.style.opacity = '1';
+
+        if (!wrapper.querySelector('.img-fallback-text')) {
+          const failText = document.createElement('div');
+          failText.className = 'img-fallback-text';
+          failText.innerText = '圖片載入失敗';
+          wrapper.appendChild(failText);
+        }
+
+        if (typeof onFatal === 'function') onFatal();
+      };
+
+      wrapper.appendChild(img);
+      return img;
+    }
+
     function renderChest() {
       const gallery = document.getElementById('chestGallery');
       const controls = document.getElementById('paginationControls');
@@ -355,11 +408,23 @@ function handleCreeperOutsideClick(event) {
       if (currentPage < 1) currentPage = 1;
       const startIndex = (currentPage - 1) * itemsPerPage;
       const pageImages = allChestImages.slice(startIndex, startIndex + itemsPerPage);
-      gallery.innerHTML = pageImages.map(url => `
-    <div style="width:100%; aspect-ratio:1/1; display:flex; align-items:center; justify-content:center;">
-      <img src="${url}" style="width:100%; height:100%; object-fit:contain; image-rendering:pixelated;">
-    </div>
-  `).join("");
+      gallery.innerHTML = "";
+      pageImages.forEach(url => {
+        const cell = document.createElement('div');
+        cell.style.width = '100%';
+        cell.style.aspectRatio = '1 / 1';
+        cell.style.display = 'flex';
+        cell.style.alignItems = 'center';
+        cell.style.justifyContent = 'center';
+
+        appendSafeImage(cell, url, {
+          className: 'chest-img',
+          width: 160,
+          height: 160
+        });
+
+        gallery.appendChild(cell);
+      });
       if (allChestImages.length > itemsPerPage) {
         controls.classList.remove('hidden');
         const pageInfo = document.getElementById('pageInfo');
@@ -447,11 +512,33 @@ function handleCreeperOutsideClick(event) {
           if (isImage) {
             if (giftArea) {
               if (giftUrl.toLowerCase().includes('.png')) {
-                giftArea.innerHTML = `<div style="color:#ffeb3b;">🍎 發現掉落物！</div><div class="img-wrapper"><img src="${giftUrl}" class="chest-img"></div>`;
+                giftArea.innerHTML = `<div style="color:#ffeb3b;">🍎 發現掉落物！</div><div class="img-wrapper" id="giftImageWrapper"></div>`;
                 const wrapper = giftArea.querySelector('.img-wrapper');
-                if (wrapper) addPixelParticles(wrapper);
+                if (wrapper) {
+                  appendSafeImage(wrapper, giftUrl, {
+                    className: 'chest-img',
+                    width: 320,
+                    height: 320,
+                    onLoaded: () => addPixelParticles(wrapper)
+                  });
+                }
               } else {
-                giftArea.innerHTML = `<div style="color:#ffeb3b;">🍎 發現掉落物！</div><img id="luckyGif" src="${giftUrl}" style="width:100%; border-radius:8px; object-fit:contain;">`;
+                giftArea.innerHTML = `<div style="color:#ffeb3b;">🍎 發現掉落物！</div><div id="gifWrapper" style="width:100%; min-height:160px; display:flex; align-items:center; justify-content:center;"></div>`;
+                const gifWrapper = document.getElementById('gifWrapper');
+                if (gifWrapper) {
+                  const gifImg = appendSafeImage(gifWrapper, giftUrl, {
+                    className: '',
+                    width: 320,
+                    height: 320
+                  });
+                  if (gifImg) {
+                    gifImg.style.width = '100%';
+                    gifImg.style.height = 'auto';
+                    gifImg.style.maxHeight = '320px';
+                    gifImg.style.borderRadius = '8px';
+                    gifImg.style.objectFit = 'contain';
+                  }
+                }
               }
               giftArea.classList.remove('hidden');
             }

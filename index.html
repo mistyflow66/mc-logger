@@ -49,9 +49,27 @@
 
 
     /* 特效容器設定 */
-    .img-wrapper { position: relative; width: 100%; aspect-ratio: 1 / 1; display: flex; align-items: center; justify-content: center; overflow: hidden !important; animation: mcGentleFloat 4s ease-in-out infinite; will-change: transform; z-index: 1; opacity: 1; }
-    .particle-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; }
-    .chest-img { width: 90%; height: 90%; object-fit: contain; image-rendering: pixelated; position: relative; z-index: 1; margin: auto; display: block; }
+    .img-wrapper {
+      position: relative;
+      min-height: 200px;
+      overflow: hidden;
+      display: none;
+    }
+    .particle-layer {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+    }
+    .chest-img {
+      position: relative;
+      z-index: 2;
+      width: 90%;
+      display: block;
+      margin: 0 auto;
+    }
     .img-fallback-text { color:#999; font-size:11px; text-align:center; }
 
     /* 全區域像素粒子樣式：與像素藝術一致的大小 */
@@ -396,31 +414,34 @@ function handleCreeperOutsideClick(event) {
     }
 
     function renderChestImage(url, container) {
+      // 1. 先徹底清空容器，移除所有可能存在的舊粒子與圖片
       container.innerHTML = '';
-      container.style.display = 'flex';
-      container.style.opacity = '0';
 
-      const particleLayer = document.createElement('div');
-      particleLayer.className = 'particle-layer';
-      container.appendChild(particleLayer);
-
+      // 2. 建立圖片元素
       const img = new Image();
-      img.src = url;
-      img.className = 'chest-img';
-      img.decoding = 'async';
-      img.loading = 'lazy';
 
+      // 3. 設定圖片載入監聽（最關鍵的順序）
       img.onload = () => {
-        container.style.opacity = '1';
+        // 圖片成功載入後，才建立特效層
+        const particleLayer = document.createElement('div');
+        particleLayer.className = 'particle-layer';
+        container.appendChild(particleLayer);
+
+        // 將圖片放入容器
+        img.className = 'chest-img';
+        container.appendChild(img);
+
+        // 最後才啟動粒子特效
         addPixelParticles(particleLayer);
+        container.style.display = 'block';
       };
 
       img.onerror = () => {
-        console.error('寶箱圖片載入失敗，網址：', url);
+        console.error('圖片來源無效，已攔截破圖:', url);
         container.style.display = 'none';
       };
 
-      container.appendChild(img);
+      img.src = url;
     }
 
     function renderChest() {

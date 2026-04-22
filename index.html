@@ -454,6 +454,8 @@ function handleCreeperOutsideClick(event) {
                   img.referrerPolicy = "no-referrer";
                   img.src = `${giftUrl}?v=${new Date().getTime()}`;
                   img.className = 'chest-img';
+                  img.style.width = '90%';
+                  img.style.height = '90%';
                   img.onload = () => {
                     wrapper.appendChild(img);
                     addPixelParticles(wrapper);

@@ -447,9 +447,17 @@ function handleCreeperOutsideClick(event) {
           if (isImage) {
             if (giftArea) {
               if (giftUrl.toLowerCase().includes('.png')) {
-                giftArea.innerHTML = `<div style="color:#ffeb3b;">🍎 發現掉落物！</div><div class="img-wrapper"><img src="${giftUrl}" class="chest-img"></div>`;
+                giftArea.innerHTML = `<div style="color:#ffeb3b;">🍎 發現掉落物！</div><div class="img-wrapper"></div>`;
                 const wrapper = giftArea.querySelector('.img-wrapper');
-                if (wrapper) addPixelParticles(wrapper);
+                if (wrapper) {
+                  const img = new Image();
+                  img.src = `${giftUrl}?v=${new Date().getTime()}`;
+                  img.className = 'chest-img';
+                  img.onload = () => {
+                    wrapper.appendChild(img);
+                    addPixelParticles(wrapper);
+                  };
+                }
               } else {
                 giftArea.innerHTML = `<div style="color:#ffeb3b;">🍎 發現掉落物！</div><img id="luckyGif" src="${giftUrl}" style="width:100%; border-radius:8px; object-fit:contain;">`;
               }

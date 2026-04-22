@@ -357,7 +357,7 @@ function handleCreeperOutsideClick(event) {
       const pageImages = allChestImages.slice(startIndex, startIndex + itemsPerPage);
       gallery.innerHTML = pageImages.map(url => `
     <div style="width:100%; aspect-ratio:1/1; display:flex; align-items:center; justify-content:center;">
-      <img src="${url}" style="width:100%; height:100%; object-fit:contain; image-rendering:pixelated;">
+      <img src="${url}" referrerpolicy="no-referrer" style="width:90%; height:90%; object-fit:contain; image-rendering:pixelated;">
     </div>
   `).join("");
       if (allChestImages.length > itemsPerPage) {

@@ -49,28 +49,8 @@
 
 
     /* 特效容器設定 */
-    .img-wrapper {
-      position: relative;
-      min-height: 200px;
-      overflow: hidden;
-      display: none;
-    }
-    .particle-layer {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      z-index: 1;
-    }
-    .chest-img {
-      position: relative;
-      z-index: 2;
-      width: 90%;
-      display: block;
-      margin: 0 auto;
-    }
-    .img-fallback-text { color:#999; font-size:11px; text-align:center; }
+    .img-wrapper { position: relative; width: 100%; aspect-ratio: 1 / 1; display: flex; align-items: center; justify-content: center; overflow: visible; animation: mcGentleFloat 4s ease-in-out infinite; will-change: transform; z-index: 1; }
+    .chest-img { width: 100%; height: 100%; object-fit: contain; image-rendering: pixelated; position: relative; z-index: 2; /* 圖片夾在中間 */ }
 
     /* 全區域像素粒子樣式：與像素藝術一致的大小 */
     .pixel-particle {
@@ -207,7 +187,6 @@
     };
 
     const randomPlaceholders = ["寫點悄悄話...", "還在ㄊㄟ", "現在的心情...", "(⁠・⁠∀⁠・⁠)", "(⁠ㆁ⁠ω⁠ㆁ⁠)", "(⁠◍⁠•⁠ᴗ⁠•⁠◍⁠)", "今天運動了嗎？"];
-    const FALLBACK_IMAGE_URL = "https://meee.com.tw/x9oTG9x.png";
     let allChestImages = [];
     let currentPage = 1;
     const itemsPerPage = 10;
@@ -362,88 +341,6 @@ function handleCreeperOutsideClick(event) {
         .catch(err => console.error("抓取資料失敗:", err));
     }
 
-    function appendSafeImage(wrapper, url, options = {}) {
-      const {
-        className = 'chest-img',
-        width = 256,
-        height = 256,
-        onLoaded = null,
-        onFatal = null
-      } = options;
-
-      wrapper.style.opacity = '0';
-
-      const img = new Image();
-      img.src = url;
-      img.className = className;
-      img.width = width;
-      img.height = height;
-      img.decoding = 'async';
-      img.loading = 'lazy';
-
-      let hasRetried = false;
-
-      img.onload = () => {
-        wrapper.style.opacity = '1';
-        if (typeof onLoaded === 'function') onLoaded(img);
-      };
-
-      img.onerror = () => {
-        if (!hasRetried && img.src !== FALLBACK_IMAGE_URL) {
-          hasRetried = true;
-          img.src = FALLBACK_IMAGE_URL;
-          return;
-        }
-
-        console.error('圖片載入失敗，網址：', url);
-        img.style.display = 'none';
-        wrapper.style.opacity = '1';
-
-        if (!wrapper.querySelector('.img-fallback-text')) {
-          const failText = document.createElement('div');
-          failText.className = 'img-fallback-text';
-          failText.innerText = '圖片載入失敗';
-          wrapper.appendChild(failText);
-        }
-
-        if (typeof onFatal === 'function') onFatal();
-      };
-
-      wrapper.appendChild(img);
-      return img;
-    }
-
-    function renderChestImage(url, container) {
-      // 1. 先徹底清空容器，移除所有可能存在的舊粒子與圖片
-      container.innerHTML = '';
-
-      // 2. 建立圖片元素
-      const img = new Image();
-
-      // 3. 設定圖片載入監聽（最關鍵的順序）
-      img.onload = () => {
-        // 圖片成功載入後，才建立特效層
-        const particleLayer = document.createElement('div');
-        particleLayer.className = 'particle-layer';
-        container.appendChild(particleLayer);
-
-        // 將圖片放入容器
-        img.className = 'chest-img';
-        container.appendChild(img);
-
-        // 最後才啟動粒子特效
-        addPixelParticles(particleLayer);
-        container.style.display = 'block';
-      };
-
-      img.onerror = () => {
-        console.error('圖片來源無效，已攔截破圖:', url);
-        container.style.display = 'none';
-      };
-
-      img.src = url;
-    }
-
     function renderChest() {
       const gallery = document.getElementById('chestGallery');
       const controls = document.getElementById('paginationControls');
@@ -458,23 +355,11 @@ function handleCreeperOutsideClick(event) {
       if (currentPage < 1) currentPage = 1;
       const startIndex = (currentPage - 1) * itemsPerPage;
       const pageImages = allChestImages.slice(startIndex, startIndex + itemsPerPage);
-      gallery.innerHTML = "";
-      pageImages.forEach(url => {
-        const cell = document.createElement('div');
-        cell.style.width = '100%';
-        cell.style.aspectRatio = '1 / 1';
-        cell.style.display = 'flex';
-        cell.style.alignItems = 'center';
-        cell.style.justifyContent = 'center';
-
-        appendSafeImage(cell, url, {
-          className: 'chest-img',
-          width: 160,
-          height: 160
-        });
-
-        gallery.appendChild(cell);
-      });
+      gallery.innerHTML = pageImages.map(url => `
+    <div style="width:100%; aspect-ratio:1/1; display:flex; align-items:center; justify-content:center;">
+      <img src="${url}" style="width:100%; height:100%; object-fit:contain; image-rendering:pixelated;">
+    </div>
+  `).join("");
       if (allChestImages.length > itemsPerPage) {
         controls.classList.remove('hidden');
         const pageInfo = document.getElementById('pageInfo');
@@ -562,28 +447,11 @@ function handleCreeperOutsideClick(event) {
           if (isImage) {
             if (giftArea) {
               if (giftUrl.toLowerCase().includes('.png')) {
-                giftArea.innerHTML = `<div style="color:#ffeb3b;">🍎 發現掉落物！</div><div class="img-wrapper" id="giftImageWrapper"></div>`;
+                giftArea.innerHTML = `<div style="color:#ffeb3b;">🍎 發現掉落物！</div><div class="img-wrapper"><img src="${giftUrl}" class="chest-img"></div>`;
                 const wrapper = giftArea.querySelector('.img-wrapper');
-                if (wrapper) {
-                  renderChestImage(giftUrl, wrapper);
-                }
+                if (wrapper) addPixelParticles(wrapper);
               } else {
-                giftArea.innerHTML = `<div style="color:#ffeb3b;">🍎 發現掉落物！</div><div id="gifWrapper" style="width:100%; min-height:160px; display:flex; align-items:center; justify-content:center;"></div>`;
-                const gifWrapper = document.getElementById('gifWrapper');
-                if (gifWrapper) {
-                  const gifImg = appendSafeImage(gifWrapper, giftUrl, {
-                    className: '',
-                    width: 320,
-                    height: 320
-                  });
-                  if (gifImg) {
-                    gifImg.style.width = '100%';
-                    gifImg.style.height = 'auto';
-                    gifImg.style.maxHeight = '320px';
-                    gifImg.style.borderRadius = '8px';
-                    gifImg.style.objectFit = 'contain';
-                  }
-                }
+                giftArea.innerHTML = `<div style="color:#ffeb3b;">🍎 發現掉落物！</div><img id="luckyGif" src="${giftUrl}" style="width:100%; border-radius:8px; object-fit:contain;">`;
               }
               giftArea.classList.remove('hidden');
             }

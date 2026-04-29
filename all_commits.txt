@@ -1,0 +1,74 @@
+2026-04-22 | ac658db | Fix missing newline at end of index.html
+2026-04-22 | bf42369 | Modify image rendering and add referrer policy
+2026-04-22 | 8908c31 | Set image referrer policy and fix end of file
+2026-04-22 | 9f1e11e | Update giftArea to handle images more efficiently
+2026-04-22 | a33d209 | (改回之前的版本)Refactor image handling and styling in index.html
+2026-04-22 | e7b6d1e | Refactor chest image display and styles
+2026-04-22 | 794aa96 | Enhance image rendering and opacity effects
+2026-04-22 | 7a6187b | Enhance image loading with fallback and safety checks
+2026-04-22 | 9e6111c | Modify img-wrapper and chest-img styles
+2026-04-21 | 353017a | Refine pixel particle size and animation properties
+2026-04-21 | 24f352c | Adjust pixel particle styles and animation timing
+2026-04-21 | c78111d | Refactor particle animations and add pixel particles
+2026-04-21 | 2f62760 | Update animation keyframes and particle generation
+2026-04-21 | dc91dd2 | Update animations and styles for image effects
+2026-04-21 | 25fa5f5 | Refactor CSS animations and comments in index.html
+2026-04-21 | abb49f3 | Refactor animations and adjust styles in index.html
+2026-04-21 | 4cd036c | Adjust animations and styles in index.html
+2026-04-21 | 60c30a5 | Enhance image display and add animations in index.html
+2026-04-02 | a5e2094 | Update opening date and timer message in index.html
+2026-02-14 | 5637600 | Update index.html
+2026-02-14 | 5818c24 | Refactor slot logic for pity mode handling
+2026-02-14 | 5b73aff | Modify guest welcome message for clarity
+2026-02-14 | 11a430c | Refactor user initialization and access handling
+2026-02-14 | 02e7429 | Refactor window.onload for guest user handling
+2026-02-14 | 052df88 | Update index.html
+2026-02-14 | a089e3c | Refactor checkWin function and update button logic
+2026-02-14 | 89bdd5b | Refactor user handling and guest mode logic
+2026-02-13 | 396cfb1 | Enhance dashboard with pity count and save logic
+2026-02-13 | b097161 | Update index.html
+2026-02-13 | 22f9039 | Update index.html
+2026-02-13 | 8526a30 | Refactor submitForm function and enhance comments
+2026-02-13 | 7499897 | Refactor submitForm function and remove comments
+2026-02-13 | fc4b2ce | Improve submitForm function and alert messages
+2026-02-13 | 1831589 | Refactor submitForm function and improve alerts
+2026-02-13 | 1bf2351 | Refactor index.html for improved UI and code clarity
+2026-02-13 | fb283d1 | Update button text and reset form on success
+2026-02-13 | d1eaa7c | Refactor index.html for improved structure and styles
+2026-02-13 | 4dfea5a | Improve button handling and logging functionality
+2026-02-13 | 3ce865b | Add dashboard flash effect and update styles
+2026-02-13 | ef23899 | Refactor index.html for improved functionality
+2026-02-13 | 1bceac1 | Refactor HTML and JavaScript for improved clarity
+2026-02-13 | c305a07 | Update index.html
+2026-02-13 | df7da07 | Enhance styling and functionality of dashboard
+2026-02-12 | de539a3 | Refactor access key handling in index.html
+2026-02-12 | 576cba6 | Update index.html
+2026-02-12 | ef3ace7 | Update index.html
+2026-02-12 | 58822f1 | Update index.html
+2026-02-12 | 5c56c17 | Update slot.html
+2026-02-12 | a61f4ae | Refactor dashboard click logic and modal handling
+2026-02-12 | e198bed | Update index.html with new styles and modals
+2026-02-12 | b97da05 | Create slot.html for MC Item Slot Machine
+2026-01-30 | e123a70 | Update index.html
+2026-01-30 | 98c861b | Update index.html
+2026-01-30 | dc03e01 | Update index.html
+2026-01-30 | 8101fa7 | Update index.html
+2026-01-30 | de3dd1c | Update index.html
+2026-01-29 | 2d8520d | Update index.html
+2026-01-29 | d8130d6 | Update index.html
+2026-01-29 | 22a9ed6 | Update index.html
+2026-01-29 | f0d5686 | Update index.html
+2026-01-29 | b4fe503 | Update index.html
+2026-01-29 | 9227949 | Update index.html
+2026-01-29 | b33533b | Update index.html
+2026-01-29 | 9eea49e | Update index.html
+2026-01-29 | 4eb18e2 | Update index.html
+2026-01-29 | ba5ab06 | Update index.html
+2026-01-29 | 01558be | Update index.html
+2026-01-29 | a64f08b | Update index.html
+2026-01-29 | 5bbbf18 | Update index.html
+2026-01-29 | 7f31a50 | Update index.html
+2026-01-29 | 16c6544 | Update index.html
+2026-01-29 | 8722549 | Update index.html
+2026-01-29 | 77446b6 | Add files via upload
+2026-01-29 | 1ce2f00 | Initial commit

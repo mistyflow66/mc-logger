@@ -1,0 +1,909 @@
+diff --git a/index.html b/index.html
+new file mode 100644
+index 0000000..de8aba3
+--- /dev/null
++++ b/index.html
+@@ -0,0 +1,646 @@
++<!DOCTYPE html>
++<html>
++<head>
++  <meta charset="UTF-8">
++  <meta name="viewport" content="width=device-width, initial-scale=1.0">
++  <link rel="icon" type="image/png" href="https://meee.com.tw/x9oTG9x.png">
++  <link rel="apple-touch-icon" href="https://meee.com.tw/x9oTG9x.png">
++  <meta name="apple-mobile-web-app-capable" content="yes">
++  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
++
++  <title>麥塊冒險</title>
++  <style>
++    :root { --mc-green: #388E3C; --mc-dirt: #795548; --mc-stone: #424242; }
++    body { font-family: 'Segoe UI', sans-serif; background: #2c2c2c; color: white; padding: 15px; text-align: center; margin:0; }
++    .container { background: #3c3c3c; border: 4px solid #000; padding: 20px; border-radius: 4px; max-width: 400px; margin: auto; }
++    h2 { color: #8bc34a; text-shadow: 2px 2px #000; margin: 10px 0; }
++    
++    .dashboard { background: #000; border: 4px solid #555; padding: 15px; margin-bottom: 15px; cursor: default; }
++    
++    .balance-value { color: #00e676; font-size: 32px; font-weight: bold; font-family: 'Courier New', monospace; }
++    .user-select { background: #4e4e4e; border: 2px solid #000; padding: 10px; margin-bottom: 15px; display: flex; justify-content: space-around; align-items: center; }
++    .radio-group { cursor: pointer; display: flex; align-items: center; }
++    select, input { width: 100%; padding: 12px; margin-bottom: 10px; border: 3px solid #000; background: #fff; box-sizing: border-box; font-size: 16px; color: #000; }
++    button { width: 100%; padding: 15px; background: var(--mc-green); color: white; border: 3px solid #1b5e20; font-weight: bold; font-size: 18px; cursor: pointer; box-shadow: 0 4px #1b5e20; }
++    .daily-log { background: #252525; border: 2px solid #555; padding: 10px; margin-top: 15px; text-align: left; }
++    .log-title { border-bottom:1px solid #555; font-weight:bold; color: #ffeb3b; margin-bottom: 5px; }
++    .score-table { width: 100%; border-collapse: collapse; margin-top: 5px; font-size: 13px; color: #fff; }
++    .score-table td, .score-table th { border: 1px solid #555; padding: 6px; text-align: center; }
++    .score-table th { background: #795548; }
++    .hidden { display: none !important; }
++
++    .modal-overlay {
++      display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
++      background: rgba(0,0,0,0.85); z-index: 10000; justify-content: center; align-items: center;
++    }
++    .modal-content { position: relative; width: 95vw; max-width: 380px; }
++    .close-btn { position: absolute; top: -45px; right: 0; color: white; font-size: 35px; cursor: pointer; padding: 5px; line-height: 1; }
++
++    #chestGallery { 
++      display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; 
++      background: #1e1e1e; padding: 10px; margin-top: 5px; border-radius: 5px; 
++    }
++    /* 1. 圖片自身溫和呼吸浮動 (大幅度修正) */
++    @keyframes mcGentleFloat { 
++      0%, 100% { transform: translateY(0px); } 
++      50% { transform: translateY(-5px); } /* 浮動幅度增加到 5px */
++    }
++
++
++
++    /* 特效容器設定 */
++    .img-wrapper { position: relative; width: 100%; aspect-ratio: 1 / 1; display: flex; align-items: center; justify-content: center; overflow: visible; animation: mcGentleFloat 4s ease-in-out infinite; will-change: transform; z-index: 1; }
++    .chest-img { width: 100%; height: 100%; object-fit: contain; image-rendering: pixelated; position: relative; z-index: 2; /* 圖片夾在中間 */ }
++
++    /* 全區域像素粒子樣式：與像素藝術一致的大小 */
++    .pixel-particle {
++      position: absolute;
++      width: 4.5px;
++      height: 4.5px;
++      pointer-events: none;
++      opacity: 0;
++      animation: floatUp 4s linear infinite;
++      image-rendering: pixelated; /* 確保粜角分明 */
++      z-index: 0; /* 保持在背景 */
++    }
++
++    @keyframes floatUp {
++      0% { opacity: 0; transform: translateY(10px); }
++      20% { opacity: 0.6; } /* 稍微提高一點亞度 */
++      80% { opacity: 0.4; } 
++      100% { transform: translateY(-40px); opacity: 0; }
++    }
++    .pagination { display: flex; justify-content: space-between; align-items: center; padding: 10px 5px 5px 5px; font-size: 13px; color: #aaa; }
++    .page-btn { background: none; border: none; color: #55efc4; text-decoration: underline; padding: 5px; font-size: 13px; width: auto; box-shadow: none; cursor: pointer; }
++    .page-btn:disabled { color: #555; text-decoration: none; cursor: not-allowed; }
++    .stamp-card { display: flex; justify-content: space-between; align-items: center; background: #000; padding: 10px 15px; margin-top: 10px; border: 2px solid #555; }
++    .stamp-item { font-size: 14px; color: #ffeb3b; flex: 1; text-align: center; white-space: nowrap; }
++  </style>
++</head>
++<body>
++  <div class="container">
++    <h2>💎 冒險儀表板</h2>
++    <div id="timer" style="font-size: 12px; color: #aaa; margin-bottom: 10px;">載入中...</div>
++
++    <div class="dashboard" onclick="handleDashboardClick()">
++      <div style="color:#fff; font-size:14px;">🔋 目前 3C 能量</div>
++      <div class="balance-value" id="balanceDisplay">0</div>
++      <div class="stamp-card">
++    <div class="stamp-item">⭐ 自己起床: <span id="wakeupCount">0</span>/10</div>
++    <div class="stamp-item">❤️ GOOD: <span id="goodCount">0</span>/10</div>
++  </div>
++
++  <div style="font-size: 11px; color: #55efc4; margin-top: 8px; font-family: monospace;">
++    🍀 幸運值累積: <span id="pityCount">0</span> / 5 (滿 5 次送免費抽)
++  </div>
++</div>
++
++    <div class="user-select">
++      <span>角色:</span>
++      <label class="radio-group"><input type="radio" name="user" value="卉" checked onclick="switchUser('卉')"> 卉</label>
++      <label class="radio-group"><input type="radio" name="user" value="姐" onclick="switchUser('姐')"> 姐</label>
++    </div>
++
++    <div id="passwordArea" class="hidden">
++      <input type="password" id="passwordInput" placeholder="輸入密碼">
++    </div>
++
++    <form id="questForm">
++      <select id="typeSelect" onchange="updateItems()" required></select>
++      <select id="itemSelect" onchange="checkValueType()" required></select>
++      <div id="valueArea">
++        <input id="valueInput" placeholder="數量/分數">
++      </div>
++      <input type="text" id="noteInput" placeholder="寫點備註..."> 
++      <button type="button" onclick="submitForm()">💾 存檔紀錄</button>
++    </form>
++
++    <div id="chestSection" style="margin-top:10px; text-align:left;">
++      <div style="cursor:pointer; color:#55efc4; font-size:14px;" onclick="toggleChest()">📦 我的寶箱 (點開相簿)</div>
++      <div id="chestWrapper" class="hidden" style="background: #1e1e1e; margin-top: 5px; border-radius: 5px;">
++        <div id="chestGallery"></div>
++        <div id="paginationControls" class="pagination">
++          <button id="prevPage" class="page-btn" onclick="changePage(-1)">＜ 上一頁</button>
++          <span id="pageInfo" style="font-family: monospace;">1 / 1</span>
++          <button id="nextPage" class="page-btn" onclick="changePage(1)">下一頁 ＞</button>
++        </div>
++      </div>
++    </div>
++
++    <div id="giftArea" class="hidden" style="margin-top:20px; background:#000; border:3px dashed #ffeb3b; padding:10px;">
++      <div style="color:#ffeb3b;">🍎 發現掉落物！</div>
++      <img id="luckyGif" src="" style="width:100%; border-radius:8px;">
++    </div>
++
++    <div class="daily-log">
++      <div class="log-title">📅 今天的日誌</div>
++      <div id="todayList" style="color:#8bc34a; font-size: 14px;"></div>
++    </div>
++
++    <div class="daily-log" style="border-color: #fab1a0;">
++      <div class="log-title" style="color: #ff7675;">📢 悄悄話留言板</div>
++      <div id="noteList" style="font-size: 13px; color: #dfe6e9;"></div>
++    </div>
++
++    <div class="daily-log" style="border-color: #8bc34a;">
++      <div class="log-title" style="color: #8bc34a;">📊 運動換算表</div>
++      <table class="score-table">
++        <thead>
++          <tr><th>項目</th><th>基準單位</th><th>能量</th></tr>
++        </thead>
++        <tbody>
++          <tr><td>跳繩</td><td>100 下</td><td>+ 5</td></tr>
++          <tr><td>跑步</td><td>200 公尺</td><td>+ 5</td></tr>
++          <tr><td>仰臥起坐</td><td>1 分鐘</td><td>+ 5</td></tr>
++          <tr style="color: #ffeb3b; background: #333;"><td>⭐ 自己起床</td><td>滿 10 次</td><td>+ 5 (額外獎勵)</td></tr>
++          <tr style="color: #ffeb3b; background: #333;"><td>❤️ GOOD</td><td>滿 10 次</td><td>+ 10 (額外獎勵)</td></tr>
++        </tbody>
++      </table>
++    </div>
++  </div>
++
++  <div id="slotModal" class="modal-overlay">
++    <div class="modal-content">
++      <span class="close-btn" onclick="closeSlotModal()">&times;</span>
++      <iframe id="slotFrame" src="slot.html" width="100%" height="400px" frameborder="0" scrolling="no"></iframe>
++    </div>
++  </div>
++
++  <div id="creeperModal" class="modal-overlay" onclick="handleCreeperOutsideClick(event)">
++    <div class="modal-content">
++      <span class="close-btn" onclick="closeCreeperModal()">&times;</span>
++      <iframe src="https://mistyflow66.github.io/creeper/" width="100%" height="400px" frameborder="0"></iframe>
++    </div>
++  </div>
++
++  <script>
++    const SUPERVISOR_CODE = 248 * 15 - 48;
++
++    let userKey = localStorage.getItem('mc_access_key') || "";
++
++    const gasUrl = "https://script.google.com/macros/s/AKfycby8MaeORmgHynbc4qTnjUUCyn12NWZYJP6HEhCZ1wEsXOX3fnTlQT-LP9l8FRNQf4cG/exec";
++    const openingDate = new Date("2026-06-15");
++    const optionsMap = {
++      "卉": { "運動": ["跳繩", "跑步", "仰臥起坐"], "3C": ["看電視", "用手機", "玩電腦"], "規劃": ["閱讀", "做小書", "練習英文", "其他"] },
++      "姐": { "運動": ["跳繩", "跑步", "仰臥起坐"], "3C": ["看電視", "用手機", "玩電腦"], "獎勵": ["自己起床", "GOOD", "加分", "扣分"] },
++      "guest": {}
++    };
++
++    const randomPlaceholders = ["寫點悄悄話...", "還在ㄊㄟ", "現在的心情...", "(⁠・⁠∀⁠・⁠)", "(⁠ㆁ⁠ω⁠ㆁ⁠)", "(⁠◍⁠•⁠ᴗ⁠•⁠◍⁠)", "今天運動了嗎？"];
++    let allChestImages = [];
++    let currentPage = 1;
++    const itemsPerPage = 10;
++
++    let dashClickCount = 0;
++    let dashClickTimer = null;
++
++    function setRandomPlaceholder() {
++      const randomIndex = Math.floor(Math.random() * randomPlaceholders.length);
++      const el = document.getElementById('noteInput');
++      if (el) el.placeholder = randomPlaceholders[randomIndex];
++    }
++
++    function updateTimer() {
++      const now = new Date();
++      const diff = openingDate - now;
++      const days = Math.floor(diff / (1000 * 60 * 60 * 24));
++      const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
++      const timerEl = document.getElementById('timer');
++      if (timerEl) timerEl.innerText = `更新：${now.getMonth()+1}/${now.getDate()} ${now.getHours()}:${now.getMinutes().toString().padStart(2,'0')} | 距離畢業：${days} 天 ${hours} 時`;
++    }
++
++    function handleDashboardClick() {
++      dashClickCount++;
++      clearTimeout(dashClickTimer);
++      dashClickTimer = setTimeout(() => { dashClickCount = 0; }, 2000);
++      if (dashClickCount === 5) {
++        dashClickCount = 0;
++        openCreeperModal();
++      }
++    }
++
++    function openCreeperModal() {
++      const modal = document.getElementById('creeperModal');
++      if (!modal) return;
++      const iframe = modal.querySelector('iframe');
++      if (iframe) iframe.src = "https://mistyflow66.github.io/creeper/";
++      modal.style.display = 'flex';
++    }
++
++    // 原本的關閉函式（保持單純，供打叉按鈕使用）
++function closeCreeperModal() {
++  const modal = document.getElementById('creeperModal');
++  if (modal) {
++    modal.style.display = 'none';
++    // 建議同時清除 iframe 的 src，避免苦力怕在後台繼續發出聲音或運算
++    const iframe = modal.querySelector('iframe');
++    if (iframe) iframe.src = ""; 
++  }
++}
++
++// 新增：專門處理點擊外部遮罩的邏輯
++function handleCreeperOutsideClick(event) {
++  const modal = document.getElementById('creeperModal');
++  // 核心邏輯：只有點到「黑色遮罩」本人，才觸發關閉
++  // 如果點到的是內層的 modal-content 或 iframe，則不反應
++  if (event.target === modal) {
++    closeCreeperModal();
++  }
++}
++
++    function checkAccess() {
++      let inputKey = prompt("請輸入存取密碼 (訪客請輸入 'guest')：", "");
++      if (inputKey === null) return;
++      inputKey = inputKey.trim();
++      if (inputKey === "") {
++        alert("密碼不可為空！");
++        checkAccess();
++        return;
++      }
++      userKey = inputKey;
++      localStorage.setItem('mc_access_key', userKey);
++      location.reload();
++    }
++
++    function switchUser(user) {
++      const actualUser = (userKey === "guest") ? "guest" : user;
++      const pwdArea = document.getElementById('passwordArea');
++      if (pwdArea) pwdArea.classList.toggle('hidden', actualUser !== '姐');
++
++      const typeSelect = document.getElementById('typeSelect');
++      if (!typeSelect) return;
++      typeSelect.innerHTML = '<option value="">-- 選擇類別 --</option>';
++
++      const templateUser = (actualUser === "guest") ? "卉" : actualUser;
++
++      if (optionsMap[templateUser]) {
++        Object.keys(optionsMap[templateUser]).forEach(t => {
++          typeSelect.add(new Option(t, t));
++        });
++      }
++      updateItems();
++    }
++
++    function updateItems() {
++      const userRadio = document.querySelector('input[name="user"]:checked');
++      const user = (userKey === "guest") ? "guest" : (userRadio ? userRadio.value : "卉");
++
++      const type = document.getElementById('typeSelect') ? document.getElementById('typeSelect').value : "";
++      const itemSelect = document.getElementById('itemSelect');
++      if (!itemSelect) return;
++      itemSelect.innerHTML = '<option value="">-- 選擇項目 --</option>';
++
++      const templateUser = (user === "guest") ? "卉" : user;
++
++      if (optionsMap[templateUser] && optionsMap[templateUser][type]) {
++        optionsMap[templateUser][type].forEach(i => itemSelect.add(new Option(i, i)));
++      }
++      checkValueType();
++    }
++
++    function checkValueType() {
++      const typeEl = document.getElementById('typeSelect');
++      const itemEl = document.getElementById('itemSelect');
++      const valInput = document.getElementById('valueInput');
++      if (!valInput) return;
++      const type = typeEl ? typeEl.value : "";
++      const item = itemEl ? itemEl.value : "";
++      if (type === "規劃" || item === "其他") {
++        valInput.type = "text";
++        valInput.placeholder = "做了什麼？";
++      } else {
++        valInput.type = "number";
++        valInput.placeholder = "輸入數量(數字)";
++      }
++    }
++
++    function refreshData() {
++      if (!userKey) { checkAccess(); return; }
++      fetch(`${gasUrl}?action=readData&key=${encodeURIComponent(userKey)}`)
++        .then(res => res.json())
++        .then(data => {
++          if (data.error) {
++            alert("密碼錯誤，請重新輸入");
++            localStorage.removeItem('mc_access_key');
++            userKey = "";
++            checkAccess();
++            return;
++          }
++          const setText = (id, v) => { const el = document.getElementById(id); if (el) el.innerText = v || 0; };
++          if (document.getElementById('balanceDisplay')) document.getElementById('balanceDisplay').innerText = data.total3C || 0;
++          const todayList = document.getElementById('todayList');
++          if (todayList) todayList.innerHTML = (data.todayLogs && data.todayLogs.length > 0) ? data.todayLogs.join("<br>") : "今天還沒有紀錄";
++          setText('wakeupCount', data.wakeup || 0);
++          setText('goodCount', data.good || 0);
++          setText('pityCount', data.pityProgress || 0);
++          const noteList = document.getElementById('noteList');
++          if (noteList) noteList.innerHTML = (data.notes && data.notes.length > 0) ? data.notes.join("<br>") : "目前沒有留言";
++          allChestImages = data.myChest || [];
++          renderChest();
++        })
++        .catch(err => console.error("抓取資料失敗:", err));
++    }
++
++    function renderChest() {
++      const gallery = document.getElementById('chestGallery');
++      const controls = document.getElementById('paginationControls');
++      if (!gallery || !controls) return;
++      if (allChestImages.length === 0) {
++        gallery.innerHTML = "<div style='color:#777;font-size:12px;'>寶箱還是空的...</div>";
++        controls.classList.add('hidden');
++        return;
++      }
++      const totalPages = Math.ceil(allChestImages.length / itemsPerPage);
++      if (currentPage > totalPages) currentPage = totalPages;
++      if (currentPage < 1) currentPage = 1;
++      const startIndex = (currentPage - 1) * itemsPerPage;
++      const pageImages = allChestImages.slice(startIndex, startIndex + itemsPerPage);
++      gallery.innerHTML = pageImages.map(url => `
++    <div style="width:100%; aspect-ratio:1/1; display:flex; align-items:center; justify-content:center;">
++      <img src="${url}" referrerpolicy="no-referrer" style="width:90%; height:90%; object-fit:contain; image-rendering:pixelated;">
++    </div>
++  `).join("");
++      if (allChestImages.length > itemsPerPage) {
++        controls.classList.remove('hidden');
++        const pageInfo = document.getElementById('pageInfo');
++        if (pageInfo) pageInfo.innerText = `${currentPage} / ${totalPages}`;
++        const prev = document.getElementById('prevPage');
++        const next = document.getElementById('nextPage');
++        if (prev) prev.disabled = (currentPage === 1);
++        if (next) next.disabled = (currentPage === totalPages);
++      } else {
++        controls.classList.add('hidden');
++      }
++    }
++
++    function changePage(offset) {
++      currentPage += offset;
++      renderChest();
++    }
++
++    function submitForm() {
++      if (!userKey) { checkAccess(); return; }
++
++      const userRadio = document.querySelector('input[name="user"]:checked');
++      const user = (userKey === "guest") ? "guest" : (userRadio ? userRadio.value : "卉");
++
++      const submitBtn = document.querySelector('button[onclick="submitForm()"]') || null;
++
++      if (user === '姐') {
++        const inputPwdEl = document.getElementById('passwordInput');
++        const inputPwd = inputPwdEl ? inputPwdEl.value : "";
++        if (inputPwd !== SUPERVISOR_CODE.toString()) {
++          alert("密碼錯誤！");
++          return;
++        }
++      }
++
++      const typeEl = document.getElementById('typeSelect');
++      const itemEl = document.getElementById('itemSelect');
++      const valEl = document.getElementById('valueInput');
++      const noteEl = document.getElementById('noteInput');
++
++      const type = typeEl ? typeEl.value : "";
++      const item = itemEl ? itemEl.value : "";
++      const valRaw = valEl ? String(valEl.value).trim() : "";
++      const note = noteEl ? noteEl.value.trim() : "";
++
++      if (!type || !item) { alert("請選擇類別和項目！"); return; }
++      const isTextMode = (type === "規劃" || item === "其他");
++      if (!valRaw) {
++        alert(isTextMode ? "請輸入『做了什麼』！" : "請輸入『數量數字』！");
++        return;
++      }
++
++      if (submitBtn) {
++        submitBtn.disabled = true;
++        submitBtn.innerText = "⏳ 傳送中...";
++        submitBtn.style.background = "#95a5a6";
++      }
++
++      const finalVal = isTextMode ? 0 : valRaw;
++      const otherNote = isTextMode ? valRaw : "";
++      const url = `${gasUrl}?action=addData&key=${encodeURIComponent(userKey)}&user=${encodeURIComponent(user)}&category=${encodeURIComponent(type)}&item=${encodeURIComponent(item)}&value=${encodeURIComponent(finalVal)}&otherNote=${encodeURIComponent(otherNote)}&note=${encodeURIComponent(note)}`;
++
++      const giftArea = document.getElementById('giftArea');
++      if (giftArea) giftArea.classList.add('hidden');
++      const luckyGif = document.getElementById('luckyGif');
++      if (luckyGif) luckyGif.src = "";
++
++      fetch(url).then(res => res.text()).then(giftResponse => {
++        const giftUrl = giftResponse.replace(/"/g, "").trim();
++        const isImage = giftUrl.startsWith("http");
++
++        let triggerSlot = false;
++
++        if (user === "姐"|| user === "guest") {
++          triggerSlot = true;
++        } else if (user === "卉"  && type === "運動") {
++          if (Math.random() < 0.5) triggerSlot = true;
++        }
++
++        alert("🍎 發現掉落物！");
++
++        if (triggerSlot) {
++          openSlotModal();
++        } else {
++          if (isImage) {
++            if (giftArea) {
++              if (giftUrl.toLowerCase().includes('.png')) {
++                giftArea.innerHTML = `<div style="color:#ffeb3b;">🍎 發現掉落物！</div><div class="img-wrapper"></div>`;
++                const wrapper = giftArea.querySelector('.img-wrapper');
++                if (wrapper) {
++                  const img = new Image();
++                  img.referrerPolicy = "no-referrer";
++                  img.src = `${giftUrl}?v=${new Date().getTime()}`;
++                  img.className = 'chest-img';
++                  img.style.width = '90%';
++                  img.style.height = '90%';
++                  img.onload = () => {
++                    wrapper.appendChild(img);
++                    addPixelParticles(wrapper);
++                  };
++                }
++              } else {
++                giftArea.innerHTML = `<div style="color:#ffeb3b;">🍎 發現掉落物！</div><img id="luckyGif" src="${giftUrl}" style="width:100%; border-radius:8px; object-fit:contain;">`;
++              }
++              giftArea.classList.remove('hidden');
++            }
++          } else {
++            openSlotModal();
++          }
++        }
++
++        clearFormAfterSubmit();
++        refreshData();
++      }).catch(err => {
++        console.error("提交失敗:", err);
++        alert("連線失敗，請檢查網路");
++      }).finally(() => {
++        if (submitBtn) {
++          submitBtn.disabled = false;
++          submitBtn.innerText = "💾 存檔紀錄";
++          submitBtn.style.background = "var(--mc-green)";
++        }
++      });
++    }
++
++    function clearFormAfterSubmit() {
++      const typeSelect = document.getElementById('typeSelect');
++      const itemSelect = document.getElementById('itemSelect');
++      const valInput = document.getElementById('valueInput');
++      const noteInput = document.getElementById('noteInput');
++      if (typeSelect) typeSelect.value = "";
++      if (itemSelect) itemSelect.innerHTML = '<option value="">-- 選擇項目 --</option>';
++      if (valInput) valInput.value = "";
++      if (noteInput) noteInput.value = "";
++      setRandomPlaceholder();
++    }
++
++    function toggleChest() {
++      const wrapper = document.getElementById('chestWrapper');
++      if (wrapper) wrapper.classList.toggle('hidden');
++    }
++
++    function openSlotModal() {
++      const slotFrame = document.getElementById('slotFrame');
++      if (slotFrame) slotFrame.src = "slot.html";
++      const modal = document.getElementById('slotModal');
++      if (modal) modal.style.display = 'flex';
++    }
++
++    function closeSlotModal() {
++      const modal = document.getElementById('slotModal');
++      if (modal) modal.style.display = 'none';
++    }
++
++    function addPixelParticles(wrapper) {
++      for (let i = 0; i < 40; i++) {
++        const span = document.createElement('span');
++        span.className = 'pixel-particle';
++        span.style.top = Math.random() * 100 + '%';
++        span.style.left = Math.random() * 100 + '%';
++        span.style.animationDuration = (Math.random() * 2 + 3) + 's';
++        span.style.animationDelay = Math.random() * 4 + 's';
++        const colors = ['#FFD700', '#FFFFFF', '#ADD8E6'];
++        span.style.background = colors[Math.floor(Math.random() * colors.length)];
++        wrapper.appendChild(span);
++      }
++    }
++
++    window.addEventListener('message', function(e) {
++      if (e.data === 'closeModal') {
++        closeSlotModal();
++        return;
++      }
++
++      const userRadio = document.querySelector('input[name="user"]:checked');
++      const currentUser = (userKey === "guest") ? "guest" : (userRadio ? userRadio.value : "卉");
++
++      const now = new Date();
++      const timeStr = `${now.getHours()}:${now.getMinutes().toString().padStart(2,'0')}`;
++
++      let logMsg = "";
++      let bonusValue = 0;
++      let bonusColor = "";
++      let isFail = false;
++
++      if (e.data === 'win') {
++        logMsg = `🏆 完美合成！(+1分)`;
++        bonusValue = 1;
++        bonusColor = "#FFD700";
++      } else if (e.data === 'near') {
++        logMsg = `✨ 還差一點！(+0.5分)`;
++        bonusValue = 0.5;
++        bonusColor = "#FFA500";
++      } else if (e.data === 'lose') {
++        logMsg = `⛏️ 挖掘失敗`;
++        bonusValue = 0;
++        bonusColor = "#dfe6e9";
++        isFail = true;
++      }
++
++      if (logMsg) {
++        const todayList = document.getElementById('todayList');
++        if (!todayList) return;
++        const currentLogs = (todayList.innerHTML === "今天還沒有紀錄") ? "" : todayList.innerHTML;
++        todayList.innerHTML = `<div style="color:${bonusColor}; border-left: 3px solid ${bonusColor}; padding-left: 8px; margin-bottom: 5px; font-weight: bold;">${timeStr} [${currentUser}] ${logMsg}</div>` + currentLogs;
++
++        if (userKey && (currentUser === "卉" || currentUser === "guest") && (bonusValue > 0 || isFail)) {
++          const itemText = isFail ? "抽獎失敗" : "抽獎";
++          const finalVal = isFail ? 1 : bonusValue;
++          const note = encodeURIComponent(`自動紀錄：${logMsg}`);
++
++          const saveUrl = `${gasUrl}?action=addData&key=${encodeURIComponent(userKey)}&user=${encodeURIComponent(currentUser)}&category=獎勵&item=${encodeURIComponent(itemText)}&value=${encodeURIComponent(finalVal)}&otherNote=&note=${note}`;
++
++          fetch(saveUrl).then(res => res.text()).then(() => {
++            console.log("抽獎結果已同步");
++            fetch(`${gasUrl}?action=readData&key=${encodeURIComponent(userKey)}`)
++              .then(res => res.json())
++              .then(data => {
++                const balanceEl = document.getElementById('balanceDisplay');
++                if (balanceEl) balanceEl.innerText = data.total3C;
++                const pityEl = document.getElementById('pityCount');
++                if (pityEl) pityEl.innerText = data.pityProgress;
++
++                if (isFail && data.pityProgress === 0) {
++                  setTimeout(() => {
++                    if (confirm("✨ 幸運值已滿！獲得一次保底抽獎機會，是否立即使用？")) {
++                      const slotFrame = document.getElementById('slotFrame');
++                      if (slotFrame) slotFrame.src = "slot.html?mode=pity";
++                      const slotModal = document.getElementById('slotModal');
++                      if (slotModal) slotModal.style.display = 'flex';
++                    }
++                  }, 500);
++                }
++              });
++          });
++        }
++      }
++    }, false);
++
++    // 初始化 single onload
++    window.onload = () => {
++      const isGuest = (userKey === "guest");
++      updateTimer();
++      setRandomPlaceholder();
++      setInterval(updateTimer, 60000);
++
++      if (isGuest) {
++        const userSelectDiv = document.querySelector('.user-select');
++        if (userSelectDiv) {
++          userSelectDiv.innerHTML = "<span>角色: 訪客冒險者 (Guest)</span>";
++        }
++        if (!sessionStorage.getItem('guest_welcomed')) {
++          setTimeout(showGuestWelcome, 500);
++          sessionStorage.setItem('guest_welcomed', 'true');
++        }
++      }
++
++      switchUser(isGuest ? 'guest' : '卉');
++
++      if (userKey) {
++        refreshData();
++      } else {
++        checkAccess();
++      }
++    };
++
++function showGuestWelcome() {
++    alert(
++      "🎮 歡迎來到麥塊冒險【訪客模式】\n" +
++      "━━━━━━━━━━━━━━━━\n" +
++      "✨ 模式特點：\n" +
++      "● 快速體驗：套用正式版的完整運動與 3C 換算功能。\n" +
++      "● 共享紀錄：此模式為公開體驗，所有訪客將共同累積能量！\n" + // 改成共享紀錄
++      "\n" +
++      "🎁 冒險提示：\n" +
++      "● 幸運加持：訪客模式下，每次存檔紀錄【保證觸發】掉落物抽獎！\n" + // 改成保證觸發
++      "● 隱藏彩蛋：連續點擊上方「🔋 3C 能量」區域 5 下，可開啟 Creeper 小遊戲！\n" +
++      "━━━━━━━━━━━━━━━━\n" +
++      "祝你冒險愉快！"
++      );
++    }
++  </script>
++</body>
++</html>
+diff --git a/slot.html b/slot.html
+new file mode 100644
+index 0000000..58f6f46
+--- /dev/null
++++ b/slot.html
+@@ -0,0 +1,251 @@
++<!DOCTYPE html>
++<html lang="zh-TW">
++<head>
++    <meta charset="UTF-8">
++    <meta name="viewport" content="width=device-width, initial-scale=1.0">
++    <title>MC Item Slot Machine</title>
++    <style>
++        :root {
++            --mc-dark: #212121;
++            --mc-gray: #8B8B8B;
++            --mc-light-gray: #BDBDBD;
++            --mc-border-dark: #373737;
++            --mc-green: #008000; /* 加深綠色提高對比 */
++            --mc-orange: #D96F00; /* 加深橘色，確保清晰 */
++        }
++
++        body {
++            background-color: transparent;
++            margin: 0;
++            padding: 0;
++            display: flex;
++            justify-content: center;
++            align-items: center;
++            font-family: 'Segoe UI', Arial, sans-serif;
++            overflow: hidden;
++            height: 100vh;
++        }
++
++        .machine-wrap {
++            width: 92vw;
++            max-width: 360px;
++            background-color: var(--mc-light-gray);
++            border-top: 4px solid #FFF;
++            border-left: 4px solid #FFF;
++            border-right: 4px solid var(--mc-border-dark);
++            border-bottom: 4px solid var(--mc-border-dark);
++            box-shadow: 0 8px 20px rgba(0,0,0,0.5);
++            padding: 18px;
++            box-sizing: border-box;
++            text-align: center;
++        }
++
++        h2 {
++            margin: 0 0 15px 0;
++            color: var(--mc-dark);
++            text-shadow: 1px 1px 0px #FFF;
++            font-size: 1.1rem;
++        }
++
++        .slot-container {
++            display: flex;
++            justify-content: space-between;
++            background-color: var(--mc-gray);
++            border: 4px solid var(--mc-dark);
++            padding: 8px;
++            gap: 6px;
++            margin-bottom: 18px;
++        }
++
++        .reel {
++            flex: 1;
++            aspect-ratio: 1 / 1;
++            background-color: #8B8B8B;
++            border-top: 4px solid var(--mc-border-dark);
++            border-left: 4px solid var(--mc-border-dark);
++            border-right: 4px solid #FFF;
++            border-bottom: 4px solid #FFF;
++            display: flex;
++            align-items: center;
++            justify-content: center;
++            overflow: hidden;
++        }
++
++        .reel img {
++            width: 75%;
++            height: 75%;
++            image-rendering: pixelated;
++            object-fit: contain;
++        }
++
++        .btn {
++            width: 100%;
++            padding: 12px;
++            background-color: var(--mc-gray);
++            border-top: 3px solid #DDD;
++            border-left: 3px solid #DDD;
++            border-right: 3px solid var(--mc-dark);
++            border-bottom: 3px solid var(--mc-dark);
++            color: #FFF;
++            text-shadow: 2px 2px 0px #333;
++            font-size: 1.1rem;
++            cursor: pointer;
++        }
++
++        .btn:active {
++            border-top: 3px solid var(--mc-dark);
++            border-left: 3px solid var(--mc-dark);
++            border-right: 3px solid #DDD;
++            border-bottom: 3px solid #DDD;
++        }
++
++        #status {
++            margin-top: 15px;
++            height: 24px;
++            font-size: 1rem;
++            font-weight: bold;
++            /* 加上文字陰影確保在灰色背景上清晰 */
++            text-shadow: 1px 1px 0px rgba(255,255,255,0.5);
++        }
++
++        @keyframes blurMove {
++            0% { transform: translateY(-3px); }
++            50% { transform: translateY(3px); }
++            100% { transform: translateY(-3px); }
++        }
++
++        .spinning img {
++            animation: blurMove 0.1s infinite;
++        }
++    </style>
++</head>
++<body>
++
++<div class="machine-wrap">
++    <h2>物品合成機</h2>
++    
++    <div class="slot-container">
++        <div id="r1" class="reel"><img id="img1" src="https://static.wikia.nocookie.net/minecraft/images/2/2f/New_DiamondB.png" alt="item"></div>
++        <div id="r2" class="reel"><img id="img2" src="https://static.wikia.nocookie.net/minecraft/images/8/8b/New_EmeraldB.png" alt="item"></div>
++        <div id="r3" class="reel"><img id="img3" src="https://static.wikia.nocookie.net/minecraft/images/6/69/GoldenAppleNew.png" alt="item"></div>
++    </div>
++
++    <button class="btn" id="spinBtn" onclick="startSpin()">開始抽取</button>
++    <div id="status">準備就緒</div>
++</div>
++
++<script>
++    const items = [
++        "https://static.wikia.nocookie.net/minecraft/images/2/25/BoneNew.png",
++        "https://static.wikia.nocookie.net/minecraft/images/2/2f/New_DiamondB.png",
++        "https://static.wikia.nocookie.net/minecraft/images/7/73/New_Gold_IngotB.png",
++        "https://static.wikia.nocookie.net/minecraft/images/0/00/MelonSliceNew.png",
++        "https://static.wikia.nocookie.net/minecraft/images/6/63/Carrot_Updated.png",
++        "https://static.wikia.nocookie.net/minecraft/images/6/69/GoldenAppleNew.png",
++        "https://static.wikia.nocookie.net/minecraft/images/7/7d/Apple.png",
++        "https://static.wikia.nocookie.net/minecraft/images/e/ef/BookNew.png",
++        "https://static.wikia.nocookie.net/minecraft/images/8/8a/Pufferfish%28Item%29.png",
++        "https://static.wikia.nocookie.net/minecraft/images/8/8b/New_EmeraldB.png"
++    ];
++
++    let isSpinning = false;
++
++    function startSpin() {
++        if (isSpinning) return;
++        isSpinning = true;
++
++        const btn = document.getElementById('spinBtn');
++        const status = document.getElementById('status');
++        btn.disabled = true;
++        status.textContent = "挖掘中...";
++        status.style.color = "#212121";
++
++        let results = [];
++        
++        // --- 平衡性調整：增加 10% 必中機率 ---
++        let luckyDraw = Math.random() < 0.1; 
++        let winIndex = Math.floor(Math.random() * items.length);
++
++        [1, 2, 3].forEach((id, index) => {
++            const container = document.getElementById(`r${id}`);
++            const img = document.getElementById(`img${id}`);
++            container.classList.add('spinning');
++
++            let timer = setInterval(() => {
++                img.src = items[Math.floor(Math.random() * items.length)];
++            }, 100);
++
++            setTimeout(() => {
++                clearInterval(timer);
++                let finalIdx;
++                if (luckyDraw) {
++                    finalIdx = winIndex; // 強制必中
++                } else {
++                    finalIdx = Math.floor(Math.random() * items.length);
++                }
++                
++                img.src = items[finalIdx];
++                results.push(finalIdx);
++                container.classList.remove('spinning');
++
++                if (results.length === 3) {
++                    checkWin(results);
++                }
++            }, 1200 + (index * 600));
++        });
++    }
++
++function checkWin(res) {
++    isSpinning = false;
++    const status = document.getElementById('status');
++    const spinBtn = document.getElementById('spinBtn');
++    
++    let resultType = "";
++    const urlParams = new URLSearchParams(window.location.search);
++    const isPity = urlParams.get('mode') === 'pity';
++
++    // 1. 判定結果文字
++    if (res[0] === res[1] && res[1] === res[2]) {
++        status.textContent = "★ 完美的合成！ ★";
++        status.style.color = "var(--mc-green)";
++        resultType = "win";
++    } else if (res[0] === res[1] || res[1] === res[2] || res[0] === res[2]) {
++        status.textContent = "還差一點點！";
++        status.style.color = "var(--mc-orange)";
++        resultType = "near";
++    } else {
++        status.textContent = "挖掘失敗，再試一次";
++        status.style.color = "#333";
++        resultType = "lose";
++    }
++
++    // 2. 處理保底與關閉邏輯
++    if (window.self !== window.top) {
++        
++        if (isPity && resultType === 'lose') {
++            // 【保底失敗模式】：不發送結果給主頁面，不扣除次數，不關閉視窗
++            status.textContent = "保底能量啟動！請再試一次";
++            status.style.color = "#D96F00"; 
++            spinBtn.disabled = false;
++            spinBtn.textContent = "再次挖掘";
++        } else {
++            // 【一般模式】 或 【保底中獎(win/near)】：正常發送結果並關閉
++            window.parent.postMessage(resultType, '*'); // 發送 win/near/lose 給主頁存檔
++            
++            spinBtn.disabled = true;
++            spinBtn.textContent = isPity ? "保底領取成功！" : "本次機會已用完";
++            
++            setTimeout(() => {
++                window.parent.postMessage('closeModal', '*');
++            }, 3000);
++        }
++    } else {
++        // 獨立開啟時的測試邏輯
++        spinBtn.disabled = false;
++    }
++}
++
++</script>
++
++</body>
++</html>

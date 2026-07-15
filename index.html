@@ -3,42 +3,45 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="icon" type="image/png" href="https://meee.com.tw/x9oTG9x.png">
+
+  <!-- 1. 網頁頁籤圖標 (Favicon) 改讀取本機的 Allay 大臉 -->
+  <link rel="icon" href="./favicon.ico" type="image/x-icon">
+
+  <!-- 2. PWA 核心描述檔保持不變 -->
   <link rel="manifest" href="./manifest.json">
-  <link rel="apple-touch-icon" sizes="120x120" href="https://meee.com.tw/x9oTG9x.png">
-  <link rel="apple-touch-icon" sizes="152x152" href="https://meee.com.tw/x9oTG9x.png">
-  <link rel="apple-touch-icon" sizes="167x167" href="https://meee.com.tw/x9oTG9x.png">
-  <link rel="apple-touch-icon" sizes="180x180" href="https://meee.com.tw/x9oTG9x.png">
+
+  <!-- 3. iOS / Apple 專用桌面圖示：改讀取本機帶白底的 512x512 圖片（iOS不支援192，會拉伸，用512最清晰！） -->
+  <link rel="apple-touch-icon" href="./allay_icon_512.png">
+
+  <!-- 4. PWA 啟動與狀態欄設定 -->
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="theme-color" content="#388E3C">
+  <meta name="theme-color" content="#3CFFFF"> <!--  PWA 主題色改為 Allay 的淺藍色，更有一體感 -->
 
   <title>麥塊冒險</title>
   <style>
-    /* 1. 載入本機的 PixelMplus12 (限制：只套用在英數、基本特殊符號) */
+    /* 1. 正常引入 Google Fonts */
+    @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+
+    /* 2. 妳原本的 PixelMplus12 載入設定（維持原樣即可） */
     @font-face {
       font-family: 'PixelMplus';
       src: url('./PixelMplus12-Regular.woff') format('woff');
       font-weight: normal;
       font-style: normal;
       font-display: swap;
-      
-      /* 關鍵屬性：限制只有基本英文、數字、半形標點與特定符號才會啟用此字體 */
-      /* 這能 100% 避開中文標點符號，讓中文標點完美 fallback 到俐方體 */
-      unicode-range: U+0000-007F, U+00A0-00FF, U+2000-206F, U+2100-218F, U+2460-24FF, U+25A0-25FF, U+2600-26FF;
     }
 
-    /* 2. 載入 Cubic 11 (負責全繁體中文與中文標點) */
+    /* 3. 妳原本的 Cubic 11 載入設定（維持原樣即可） */
     @font-face {
       font-family: 'Cubic11';
-      src: url('https://cdn.jsdelivr.net/gh/ACh-K/Cubic-11@main/fonts/web/Cubic_11.woff2') format('woff2'),
-           url('https://cdn.jsdelivr.net/gh/ACh-K/Cubic-11@main/fonts/web/Cubic_11.woff') format('woff');
+      src: url('https://cdn.jsdelivr.net/gh/ACh-K/Cubic-11@main/fonts/web/Cubic_11.woff2') format('woff2');
       font-weight: normal;
       font-style: normal;
       font-display: swap;
     }
 
-    /* 3. 強制全網頁套用：優先度 PixelMplus > Cubic11 */
+    /* 4. 全域預設字體：英文用 PixelMplus，中文用 Cubic11 */
     * {
       font-family: 'PixelMplus', 'Cubic11', 'Segoe UI', sans-serif !important;
     }
@@ -58,7 +61,7 @@
       text-rendering: optimizeSpeed;
     }
 
-    /* 確保所有輸入框、按鈕、選單也完全被強制套用 */
+    /* 5. 確保所有輸入框、按鈕、選單也完全被強制套用 */
     input, select, button, textarea {
       font-family: 'PixelMplus', 'Cubic11', sans-serif !important;
       letter-spacing: 0.5px;
@@ -68,7 +71,21 @@
     
     .dashboard { background: #000; border: 4px solid #555; padding: 15px; margin-bottom: 15px; cursor: default; }
     
-    .balance-value { color: #00e676; font-size: 32px; font-weight: bold; font-family: 'Courier New', monospace; }
+    .balance-value { color: #00e676; font-size: 32px; font-weight: bold; }
+    .energy-value {
+      font-family: 'Press Start 2P', monospace !important;
+      font-weight: normal;
+      font-size: 1.5rem;
+
+      /* 關鍵修正：讓它變成 inline-block 才能進行位置微調 */
+      display: inline-block;
+  
+     /* 往下方微調移 4 像素（如果覺得不夠低，可以改成 6px 或 8px 試試看） */
+      transform: translateY(6px);
+  
+     /* 或者是稍微增加行高，也能幫忙垂直置中 */
+     line-height: 1.2;
+    }
     .user-select { background: #4e4e4e; border: 2px solid #000; padding: 10px; margin-bottom: 15px; display: flex; justify-content: space-around; align-items: center; }
     .radio-group { cursor: pointer; display: flex; align-items: center; }
     select, input { width: 100%; padding: 12px; margin-bottom: 10px; border: 3px solid #000; background: #fff; box-sizing: border-box; font-size: 16px; color: #000; }
@@ -135,10 +152,12 @@
 
     <div class="dashboard" onclick="handleDashboardClick()">
       <div style="color:#fff; font-size:14px;">目前 3C 能量</div>
-      <div class="balance-value" id="balanceDisplay">0</div>
+      <div class="balance-value">
+        <span class="energy-value" id="balanceDisplay">0</span>
+      </div>
       <div class="stamp-card">
-    <div class="stamp-item">★ 自己起床: <span id="wakeupCount">0</span>/10</div>
-    <div class="stamp-item">♥ GOOD: <span id="goodCount">0</span>/10</div>
+    <div class="stamp-item">▶自己起床: <span id="wakeupCount">0</span>/10</div>
+    <div class="stamp-item">▶GOOD: <span id="goodCount">0</span>/10</div>
   </div>
 
   <div style="font-size: 11px; color: #55efc4; margin-top: 8px; font-family: monospace;">
@@ -216,8 +235,8 @@
           <tr><td>爬山</td><td>1 趟 (30分鐘)</td><td>+ 30</td></tr>
           <tr><td>背英文單字</td><td>1 個單字</td><td>+ 1</td></tr>
           <tr><td>寫短文</td><td>1 篇</td><td>+ 10</td></tr>
-          <tr style="color: #ffeb3b; background: #333;"><td>★ 自己起床</td><td>滿 10 次</td><td>+ 5 (額外獎勵)</td></tr>
-          <tr style="color: #ffeb3b; background: #333;"><td>♥ GOOD</td><td>滿 10 次</td><td>+ 10 (額外獎勵)</td></tr>
+          <tr style="color: #ffeb3b; background: #333;"><td>▶自己起床</td><td>滿 10 次</td><td>+ 5 (額外獎勵)</td></tr>
+          <tr style="color: #ffeb3b; background: #333;"><td>▶GOOD</td><td>滿 10 次</td><td>+ 10 (額外獎勵)</td></tr>
         </tbody>
       </table>
     </div>

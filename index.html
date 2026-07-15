@@ -111,6 +111,16 @@
       <div id="valueArea">
         <input id="valueInput" placeholder="數量/分數">
       </div>
+      
+      <!-- 精準跑步時間輸入區 -->
+      <div id="runTimeArea" class="hidden" style="display: flex; gap: 10px; margin-bottom: 10px; align-items: center; justify-content: center;">
+        <span style="font-size: 14px; color: #aaa; white-space: nowrap;">成績：</span>
+        <input type="number" id="runMin" placeholder="分" min="0" max="59" style="margin-bottom: 0; text-align: center; flex: 1;">
+        <span style="font-size: 14px; color: #aaa;">分</span>
+        <input type="number" id="runSec" placeholder="秒" min="0" max="59" style="margin-bottom: 0; text-align: center; flex: 1;">
+        <span style="font-size: 14px; color: #aaa;">秒</span>
+      </div>
+
       <input type="text" id="noteInput" placeholder="寫點備註..."> 
       <button type="button" onclick="submitForm()">💾 存檔紀錄</button>
     </form>
@@ -150,8 +160,11 @@
         </thead>
         <tbody>
           <tr><td>跳繩</td><td>100 下</td><td>+ 5</td></tr>
-          <tr><td>跑步</td><td>200 公尺</td><td>+ 5</td></tr>
-          <tr><td>仰臥起坐</td><td>1 分鐘</td><td>+ 5</td></tr>
+          <tr><td>跑步</td><td>200 公尺 / 800公尺</td><td>+ 5 / + 10 (時間加成)</td></tr>
+          <tr><td>仰臥起坐</td><td>1 組 (1分鐘)</td><td>+ 5</td></tr>
+          <tr><td>爬山</td><td>1 趟 (30分鐘)</td><td>+ 30</td></tr>
+          <tr><td>背英文單字</td><td>1 個單字</td><td>+ 1</td></tr>
+          <tr><td>寫短文</td><td>1 篇</td><td>+ 10</td></tr>
           <tr style="color: #ffeb3b; background: #333;"><td>⭐ 自己起床</td><td>滿 10 次</td><td>+ 5 (額外獎勵)</td></tr>
           <tr style="color: #ffeb3b; background: #333;"><td>❤️ GOOD</td><td>滿 10 次</td><td>+ 10 (額外獎勵)</td></tr>
         </tbody>
@@ -179,10 +192,18 @@
     let userKey = localStorage.getItem('mc_access_key') || "";
 
     const gasUrl = "https://script.google.com/macros/s/AKfycby8MaeORmgHynbc4qTnjUUCyn12NWZYJP6HEhCZ1wEsXOX3fnTlQT-LP9l8FRNQf4cG/exec";
-    const openingDate = new Date("2026-06-15");
+    const openingDate = new Date(2026, 7, 31);
     const optionsMap = {
-      "卉": { "運動": ["跳繩", "跑步", "仰臥起坐"], "3C": ["看電視", "用手機", "玩電腦"], "規劃": ["閱讀", "做小書", "練習英文", "其他"] },
-      "姐": { "運動": ["跳繩", "跑步", "仰臥起坐"], "3C": ["看電視", "用手機", "玩電腦"], "獎勵": ["自己起床", "GOOD", "加分", "扣分"] },
+      "卉": {
+        "運動": ["跳繩", "跑步", "仰臥起坐", "爬山"],
+        "3C": ["看電視", "用手機", "玩電腦", "玩Switch"],
+        "規劃": ["背英文單字", "寫短文"]
+      },
+      "姐": {
+        "運動": ["跳繩", "跑步", "仰臥起坐", "爬山"],
+        "3C": ["看電視", "用手機", "玩電腦", "玩Switch"],
+        "獎勵": ["自己起床", "GOOD", "加分", "扣分"]
+      },
       "guest": {}
     };
 
@@ -206,7 +227,7 @@
       const days = Math.floor(diff / (1000 * 60 * 60 * 24));
       const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
       const timerEl = document.getElementById('timer');
-      if (timerEl) timerEl.innerText = `更新：${now.getMonth()+1}/${now.getDate()} ${now.getHours()}:${now.getMinutes().toString().padStart(2,'0')} | 距離畢業：${days} 天 ${hours} 時`;
+      if (timerEl) timerEl.innerText = `更新：${now.getMonth()+1}/${now.getDate()} ${now.getHours()}:${now.getMinutes().toString().padStart(2,'0')} | 距離開學：${days} 天 ${hours} 時`;
     }
 
     function handleDashboardClick() {
@@ -302,15 +323,42 @@ function handleCreeperOutsideClick(event) {
       const typeEl = document.getElementById('typeSelect');
       const itemEl = document.getElementById('itemSelect');
       const valInput = document.getElementById('valueInput');
+      const runTimeArea = document.getElementById('runTimeArea');
+      
       if (!valInput) return;
+      
       const type = typeEl ? typeEl.value : "";
       const item = itemEl ? itemEl.value : "";
-      if (type === "規劃" || item === "其他") {
+
+      // 預設將跑步時間欄位隱藏
+      if (runTimeArea) runTimeArea.classList.add('hidden');
+
+      // 判斷是否為純文字模式
+      if (type === "規劃" && item !== "背英文單字" && item !== "寫短文" || item === "其他") {
         valInput.type = "text";
         valInput.placeholder = "做了什麼？";
       } else {
         valInput.type = "number";
-        valInput.placeholder = "輸入數量(數字)";
+        
+        // 針對不同項目顯示專屬引導提示詞
+        if (item === "跑步") {
+          valInput.placeholder = "請輸入跑了幾公尺？(跑800m記得選時間)";
+          if (runTimeArea) runTimeArea.classList.remove('hidden'); // 顯示時間選取器
+        } else if (type === "3C") {
+          valInput.placeholder = "輸入時間(分鐘)";
+        } else if (item === "仰臥起坐") {
+          valInput.placeholder = "請輸入做了幾組？(1分鐘為一組)";
+        } else if (item === "跳繩") {
+          valInput.placeholder = "請輸入跳繩總次數 (下)";
+        } else if (item === "爬山") {
+          valInput.placeholder = "今天爬了幾趟山呢？";
+        } else if (item === "背英文單字") {
+          valInput.placeholder = "今天背了幾個新單字呢？請填數字";
+        } else if (item === "寫短文") {
+          valInput.placeholder = "寫了幾篇 100 字短文呢？";
+        } else {
+          valInput.placeholder = "輸入數量(數字)";
+        }
       }
     }
 
@@ -403,7 +451,26 @@ function handleCreeperOutsideClick(event) {
       const type = typeEl ? typeEl.value : "";
       const item = itemEl ? itemEl.value : "";
       const valRaw = valEl ? String(valEl.value).trim() : "";
-      const note = noteEl ? noteEl.value.trim() : "";
+      let note = noteEl ? noteEl.value.trim() : "";
+
+      // 新增：如果項目是跑步，且有輸入時間，則把時間自動串進備註欄
+      if (item === "跑步") {
+        const runMinVal = document.getElementById('runMin').value.trim();
+        const runSecVal = document.getElementById('runSec').value.trim();
+        
+        if (runMinVal !== "" || runSecVal !== "") {
+          // 防呆補零：如果沒填就當作 0，如果秒小於 10 補 0 (例如: 5分08秒)
+          const min = runMinVal ? parseInt(runMinVal, 10) : 0;
+          let sec = runSecVal ? parseInt(runSecVal, 10) : 0;
+          
+          // 限制秒數不能超過 59
+          if (sec > 59) sec = 59;
+          const secString = String(sec).padStart(2, '0');
+          
+          const timeString = `${min}分${secString}秒`;
+          note = note ? `${timeString} | ${note}` : timeString; // 把時間附加在備註最前面
+        }
+      }
 
       if (!type || !item) { alert("請選擇類別和項目！"); return; }
       const isTextMode = (type === "規劃" || item === "其他");
@@ -419,7 +486,24 @@ function handleCreeperOutsideClick(event) {
       }
 
       const finalVal = isTextMode ? 0 : valRaw;
-      const otherNote = isTextMode ? valRaw : "";
+
+      // 決定寫入 E 欄 (備註 / otherNote) 的內容
+      let otherNote = "";
+      if (isTextMode) {
+        otherNote = valRaw; // 如果是規劃的其他文字，就存入 E 欄
+      } else if (item === "跑步") {
+        const runMinVal = document.getElementById('runMin').value.trim();
+        const runSecVal = document.getElementById('runSec').value.trim();
+        if (runMinVal !== "" || runSecVal !== "") {
+          const min = runMinVal ? parseInt(runMinVal, 10) : 0;
+          let sec = runSecVal ? parseInt(runSecVal, 10) : 0;
+          if (sec > 59) sec = 59;
+          const secString = String(sec).padStart(2, '0');
+          otherNote = `${min}分${secString}秒`; // 跑步時間存入 E 欄
+        }
+      }
+
+      // 注意：此時 noteEl (悄悄話輸入框) 的內容，會對應到 G 欄 (悄悄話)
       const url = `${gasUrl}?action=addData&key=${encodeURIComponent(userKey)}&user=${encodeURIComponent(user)}&category=${encodeURIComponent(type)}&item=${encodeURIComponent(item)}&value=${encodeURIComponent(finalVal)}&otherNote=${encodeURIComponent(otherNote)}&note=${encodeURIComponent(note)}`;
 
       const giftArea = document.getElementById('giftArea');
@@ -446,24 +530,28 @@ function handleCreeperOutsideClick(event) {
         } else {
           if (isImage) {
             if (giftArea) {
-              if (giftUrl.toLowerCase().includes('.png')) {
-                giftArea.innerHTML = `<div style="color:#ffeb3b;">🍎 發現掉落物！</div><div class="img-wrapper"></div>`;
-                const wrapper = giftArea.querySelector('.img-wrapper');
-                if (wrapper) {
-                  const img = new Image();
-                  img.referrerPolicy = "no-referrer";
-                  img.src = `${giftUrl}?v=${new Date().getTime()}`;
-                  img.className = 'chest-img';
-                  img.style.width = '90%';
-                  img.style.height = '90%';
-                  img.onload = () => {
-                    wrapper.appendChild(img);
-                    addPixelParticles(wrapper);
-                  };
-                }
-              } else {
-                giftArea.innerHTML = `<div style="color:#ffeb3b;">🍎 發現掉落物！</div><img id="luckyGif" src="${giftUrl}" style="width:100%; border-radius:8px; object-fit:contain;">`;
+              giftArea.innerHTML = `<div style="color:#ffeb3b;">🍎 發現掉落物！</div><div class="img-wrapper"></div>`;
+              const wrapper = giftArea.querySelector('.img-wrapper');
+
+              if (wrapper) {
+                const img = new Image();
+                img.referrerPolicy = "no-referrer";
+                img.src = giftUrl;
+                img.className = 'chest-img';
+                img.style.width = '90%';
+                img.style.height = '90%';
+                img.style.objectFit = 'contain';
+
+                img.onload = () => {
+                  wrapper.appendChild(img);
+                  addPixelParticles(wrapper);
+                };
+
+                img.onerror = () => {
+                  wrapper.innerHTML = `<div style="color:#ff4444; font-size:12px;">生物逃跑了... (圖片載入失敗)</div>`;
+                };
               }
+
               giftArea.classList.remove('hidden');
             }
           } else {
@@ -494,6 +582,8 @@ function handleCreeperOutsideClick(event) {
       if (itemSelect) itemSelect.innerHTML = '<option value="">-- 選擇項目 --</option>';
       if (valInput) valInput.value = "";
       if (noteInput) noteInput.value = "";
+      if (document.getElementById('runMin')) document.getElementById('runMin').value = "";
+      if (document.getElementById('runSec')) document.getElementById('runSec').value = "";
       setRandomPlaceholder();
     }
 

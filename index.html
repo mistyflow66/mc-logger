@@ -15,27 +15,52 @@
 
   <title>麥塊冒險</title>
   <style>
-    @import url('https://chinese-fonts-cdn.deno.dev/zh-tw/lilei/result.css');
+    /* 1. 載入本機的 PixelMplus12 (限制：只套用在英數、基本特殊符號) */
+    @font-face {
+      font-family: 'PixelMplus';
+      src: url('./PixelMplus12-Regular.woff') format('woff');
+      font-weight: normal;
+      font-style: normal;
+      font-display: swap;
+      
+      /* 關鍵屬性：限制只有基本英文、數字、半形標點與特定符號才會啟用此字體 */
+      /* 這能 100% 避開中文標點符號，讓中文標點完美 fallback 到俐方體 */
+      unicode-range: U+0000-007F, U+00A0-00FF, U+2000-206F, U+2100-218F, U+2460-24FF, U+25A0-25FF, U+2600-26FF;
+    }
 
-    /* 引入極速且支援繁中、英數的像素字體：俐方體11 (Lilei11) 穩定備用源 */
+    /* 2. 載入 Cubic 11 (負責全繁體中文與中文標點) */
+    @font-face {
+      font-family: 'Cubic11';
+      src: url('https://cdn.jsdelivr.net/gh/ACh-K/Cubic-11@main/fonts/web/Cubic_11.woff2') format('woff2'),
+           url('https://cdn.jsdelivr.net/gh/ACh-K/Cubic-11@main/fonts/web/Cubic_11.woff') format('woff');
+      font-weight: normal;
+      font-style: normal;
+      font-display: swap;
+    }
+
+    /* 3. 強制全網頁套用：優先度 PixelMplus > Cubic11 */
+    * {
+      font-family: 'PixelMplus', 'Cubic11', 'Segoe UI', sans-serif !important;
+    }
+
     :root { --mc-green: #388E3C; --mc-dirt: #795548; --mc-stone: #424242; }
     body {
-      /* 統一隻套用 'lilei'，若載入失敗才用系統預設 */
-      font-family: 'lilei', sans-serif;
       background: #2c2c2c;
       color: white;
       padding: 15px;
       text-align: center;
       margin: 0;
-      /* 讓像素字體邊緣更銳利、不模糊的魔法屬性 */
+
+      /* 讓像素字體邊緣銳利 */
       image-rendering: pixelated;
       -webkit-font-smoothing: none;
       -moz-osx-font-smoothing: none;
       text-rendering: optimizeSpeed;
     }
-    /* 確保所有輸入框與按鈕的字體寬度一致，不會亂飄 */
+
+    /* 確保所有輸入框、按鈕、選單也完全被強制套用 */
     input, select, button, textarea {
-      font-family: 'lilei', sans-serif !important;
+      font-family: 'PixelMplus', 'Cubic11', sans-serif !important;
       letter-spacing: 0.5px;
     }
     .container { background: #3c3c3c; border: 4px solid #000; padding: 20px; border-radius: 4px; max-width: 400px; margin: auto; }
@@ -105,19 +130,19 @@
 </head>
 <body>
   <div class="container">
-    <h2>💎 冒險儀表板</h2>
+    <h2>冒險儀表板</h2>
     <div id="timer" style="font-size: 12px; color: #aaa; margin-bottom: 10px;">載入中...</div>
 
     <div class="dashboard" onclick="handleDashboardClick()">
-      <div style="color:#fff; font-size:14px;">🔋 目前 3C 能量</div>
+      <div style="color:#fff; font-size:14px;">目前 3C 能量</div>
       <div class="balance-value" id="balanceDisplay">0</div>
       <div class="stamp-card">
-    <div class="stamp-item">⭐ 自己起床: <span id="wakeupCount">0</span>/10</div>
-    <div class="stamp-item">❤️ GOOD: <span id="goodCount">0</span>/10</div>
+    <div class="stamp-item">★ 自己起床: <span id="wakeupCount">0</span>/10</div>
+    <div class="stamp-item">♥ GOOD: <span id="goodCount">0</span>/10</div>
   </div>
 
   <div style="font-size: 11px; color: #55efc4; margin-top: 8px; font-family: monospace;">
-    🍀 幸運值累積: <span id="pityCount">0</span> / 5 (滿 5 次送免費抽)
+    幸運值累積: <span id="pityCount">0</span> / 5 (滿 5 次送免費抽)
   </div>
 </div>
 
@@ -148,11 +173,11 @@
       </div>
 
       <input type="text" id="noteInput" placeholder="寫點備註..."> 
-      <button type="button" onclick="submitForm()">💾 存檔紀錄</button>
+      <button type="button" onclick="submitForm()">存檔紀錄</button>
     </form>
 
     <div id="chestSection" style="margin-top:10px; text-align:left;">
-      <div style="cursor:pointer; color:#55efc4; font-size:14px;" onclick="toggleChest()">📦 我的寶箱 (點開相簿)</div>
+      <div style="cursor:pointer; color:#55efc4; font-size:14px;" onclick="toggleChest()">我的寶箱 (點開相簿)</div>
       <div id="chestWrapper" class="hidden" style="background: #1e1e1e; margin-top: 5px; border-radius: 5px;">
         <div id="chestGallery"></div>
         <div id="paginationControls" class="pagination">
@@ -164,22 +189,22 @@
     </div>
 
     <div id="giftArea" class="hidden" style="margin-top:20px; background:#000; border:3px dashed #ffeb3b; padding:10px;">
-      <div style="color:#ffeb3b;">🍎 發現掉落物！</div>
+      <div style="color:#ffeb3b;">♪ 發現掉落物！</div>
       <img id="luckyGif" src="" style="width:100%; border-radius:8px;">
     </div>
 
     <div class="daily-log">
-      <div class="log-title">📅 今天的日誌</div>
+      <div class="log-title"># 今天的日誌</div>
       <div id="todayList" style="color:#8bc34a; font-size: 14px;"></div>
     </div>
 
     <div class="daily-log" style="border-color: #fab1a0;">
-      <div class="log-title" style="color: #ff7675;">📢 悄悄話留言板</div>
+      <div class="log-title" style="color: #ff7675;"># 悄悄話留言板</div>
       <div id="noteList" style="font-size: 13px; color: #dfe6e9;"></div>
     </div>
 
     <div class="daily-log" style="border-color: #8bc34a;">
-      <div class="log-title" style="color: #8bc34a;">📊 運動換算表</div>
+      <div class="log-title" style="color: #8bc34a;"># 運動換算表</div>
       <table class="score-table">
         <thead>
           <tr><th>項目</th><th>基準單位</th><th>能量</th></tr>
@@ -191,8 +216,8 @@
           <tr><td>爬山</td><td>1 趟 (30分鐘)</td><td>+ 30</td></tr>
           <tr><td>背英文單字</td><td>1 個單字</td><td>+ 1</td></tr>
           <tr><td>寫短文</td><td>1 篇</td><td>+ 10</td></tr>
-          <tr style="color: #ffeb3b; background: #333;"><td>⭐ 自己起床</td><td>滿 10 次</td><td>+ 5 (額外獎勵)</td></tr>
-          <tr style="color: #ffeb3b; background: #333;"><td>❤️ GOOD</td><td>滿 10 次</td><td>+ 10 (額外獎勵)</td></tr>
+          <tr style="color: #ffeb3b; background: #333;"><td>★ 自己起床</td><td>滿 10 次</td><td>+ 5 (額外獎勵)</td></tr>
+          <tr style="color: #ffeb3b; background: #333;"><td>♥ GOOD</td><td>滿 10 次</td><td>+ 10 (額外獎勵)</td></tr>
         </tbody>
       </table>
     </div>
@@ -523,7 +548,7 @@ function handleCreeperOutsideClick(event) {
 
       if (submitBtn) {
         submitBtn.disabled = true;
-        submitBtn.innerText = "⏳ 傳送中...";
+        submitBtn.innerText = "傳送中...";
         submitBtn.style.background = "#95a5a6";
       }
 
@@ -565,14 +590,14 @@ function handleCreeperOutsideClick(event) {
           if (Math.random() < 0.5) triggerSlot = true;
         }
 
-        alert("🍎 發現掉落物！");
+        alert("♪ 發現掉落物！");
 
         if (triggerSlot) {
           openSlotModal();
         } else {
           if (isImage) {
             if (giftArea) {
-              giftArea.innerHTML = `<div style="color:#ffeb3b;">🍎 發現掉落物！</div><div class="img-wrapper"></div>`;
+              giftArea.innerHTML = `<div style="color:#ffeb3b;">♪ 發現掉落物！</div><div class="img-wrapper"></div>`;
               const wrapper = giftArea.querySelector('.img-wrapper');
 
               if (wrapper) {
@@ -609,7 +634,7 @@ function handleCreeperOutsideClick(event) {
       }).finally(() => {
         if (submitBtn) {
           submitBtn.disabled = false;
-          submitBtn.innerText = "💾 存檔紀錄";
+          submitBtn.innerText = "存檔紀錄";
           submitBtn.style.background = "var(--mc-green)";
         }
       });
@@ -678,15 +703,15 @@ function handleCreeperOutsideClick(event) {
       let isFail = false;
 
       if (e.data === 'win') {
-        logMsg = `🏆 完美合成！(+1分)`;
+        logMsg = `完美合成！(+1分)`;
         bonusValue = 1;
         bonusColor = "#FFD700";
       } else if (e.data === 'near') {
-        logMsg = `✨ 還差一點！(+0.5分)`;
+        logMsg = `還差一點！(+0.5分)`;
         bonusValue = 0.5;
         bonusColor = "#FFA500";
       } else if (e.data === 'lose') {
-        logMsg = `⛏️ 挖掘失敗`;
+        logMsg = `挖掘失敗`;
         bonusValue = 0;
         bonusColor = "#dfe6e9";
         isFail = true;
@@ -717,7 +742,7 @@ function handleCreeperOutsideClick(event) {
 
                 if (isFail && data.pityProgress === 0) {
                   setTimeout(() => {
-                    if (confirm("✨ 幸運值已滿！獲得一次保底抽獎機會，是否立即使用？")) {
+                    if (confirm("幸運值已滿！獲得一次保底抽獎機會，是否立即使用？")) {
                       const slotFrame = document.getElementById('slotFrame');
                       if (slotFrame) slotFrame.src = "slot.html?mode=pity";
                       const slotModal = document.getElementById('slotModal');
@@ -760,15 +785,15 @@ function handleCreeperOutsideClick(event) {
 
 function showGuestWelcome() {
     alert(
-      "🎮 歡迎來到麥塊冒險【訪客模式】\n" +
+      "歡迎來到麥塊冒險【訪客模式】\n" +
       "━━━━━━━━━━━━━━━━\n" +
-      "✨ 模式特點：\n" +
+      "模式特點：\n" +
       "● 快速體驗：套用正式版的完整運動與 3C 換算功能。\n" +
       "● 共享紀錄：此模式為公開體驗，所有訪客將共同累積能量！\n" + // 改成共享紀錄
       "\n" +
-      "🎁 冒險提示：\n" +
+      "冒險提示：\n" +
       "● 幸運加持：訪客模式下，每次存檔紀錄【保證觸發】掉落物抽獎！\n" + // 改成保證觸發
-      "● 隱藏彩蛋：連續點擊上方「🔋 3C 能量」區域 5 下，可開啟 Creeper 小遊戲！\n" +
+      "● 隱藏彩蛋：連續點擊上方「3C 能量」區域 5 下，可開啟 Creeper 小遊戲！\n" +
       "━━━━━━━━━━━━━━━━\n" +
       "祝你冒險愉快！"
       );

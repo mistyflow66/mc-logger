@@ -4,14 +4,40 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="icon" type="image/png" href="https://meee.com.tw/x9oTG9x.png">
-  <link rel="apple-touch-icon" href="https://meee.com.tw/x9oTG9x.png">
+  <link rel="manifest" href="./manifest.json">
+  <link rel="apple-touch-icon" sizes="120x120" href="https://meee.com.tw/x9oTG9x.png">
+  <link rel="apple-touch-icon" sizes="152x152" href="https://meee.com.tw/x9oTG9x.png">
+  <link rel="apple-touch-icon" sizes="167x167" href="https://meee.com.tw/x9oTG9x.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="https://meee.com.tw/x9oTG9x.png">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="theme-color" content="#388E3C">
 
   <title>麥塊冒險</title>
   <style>
+    @import url('https://chinese-fonts-cdn.deno.dev/zh-tw/lilei/result.css');
+
+    /* 引入極速且支援繁中、英數的像素字體：俐方體11 (Lilei11) 穩定備用源 */
     :root { --mc-green: #388E3C; --mc-dirt: #795548; --mc-stone: #424242; }
-    body { font-family: 'Segoe UI', sans-serif; background: #2c2c2c; color: white; padding: 15px; text-align: center; margin:0; }
+    body {
+      /* 統一隻套用 'lilei'，若載入失敗才用系統預設 */
+      font-family: 'lilei', sans-serif;
+      background: #2c2c2c;
+      color: white;
+      padding: 15px;
+      text-align: center;
+      margin: 0;
+      /* 讓像素字體邊緣更銳利、不模糊的魔法屬性 */
+      image-rendering: pixelated;
+      -webkit-font-smoothing: none;
+      -moz-osx-font-smoothing: none;
+      text-rendering: optimizeSpeed;
+    }
+    /* 確保所有輸入框與按鈕的字體寬度一致，不會亂飄 */
+    input, select, button, textarea {
+      font-family: 'lilei', sans-serif !important;
+      letter-spacing: 0.5px;
+    }
     .container { background: #3c3c3c; border: 4px solid #000; padding: 20px; border-radius: 4px; max-width: 400px; margin: auto; }
     h2 { color: #8bc34a; text-shadow: 2px 2px #000; margin: 10px 0; }
     
@@ -187,6 +213,22 @@
   </div>
 
   <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./service-worker.js')
+          .then((registration) => {
+            console.log('PWA service worker registered:', registration);
+          })
+          .catch((error) => {
+            console.error('PWA service worker registration failed:', error);
+          });
+      });
+    } else {
+      console.warn('Service Worker is not supported in this browser.');
+    }
+  </script>
+
+  <script>
     const SUPERVISOR_CODE = 248 * 15 - 48;
 
     let userKey = localStorage.getItem('mc_access_key') || "";
@@ -196,8 +238,8 @@
     const optionsMap = {
       "卉": {
         "運動": ["跳繩", "跑步", "仰臥起坐", "爬山"],
-        "3C": ["看電視", "用手機", "玩電腦", "玩Switch"],
-        "規劃": ["背英文單字", "寫短文"]
+        "規劃": ["背英文單字", "寫短文"],
+        "3C": ["看電視", "用手機", "玩電腦", "玩Switch"]
       },
       "姐": {
         "運動": ["跳繩", "跑步", "仰臥起坐", "爬山"],
@@ -519,7 +561,7 @@ function handleCreeperOutsideClick(event) {
 
         if (user === "姐"|| user === "guest") {
           triggerSlot = true;
-        } else if (user === "卉"  && type === "運動") {
+        } else if (user === "卉"  && (type === "運動" || type === "規劃")) {
           if (Math.random() < 0.5) triggerSlot = true;
         }
 

@@ -3,7 +3,7 @@ const PRECACHE_URLS = [
   './',
   './index.html',
   './manifest.json',
-  'https://meee.com.tw/x9oTG9x.png'
+  './allay_icon_512.png'
 ];
 
 self.addEventListener('install', (event) => {

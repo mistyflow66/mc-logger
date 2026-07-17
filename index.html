@@ -8,10 +8,18 @@
   <link rel="icon" href="./favicon.ico" type="image/x-icon">
 
   <!-- 2. PWA 核心描述檔保持不變 -->
-  <link rel="manifest" href="./manifest.json">
+  <link id="manifest" rel="manifest" href="./manifest.json">
 
-  <!-- 3. iOS / Apple 專用桌面圖示：改讀取本機帶白底的 512x512 圖片（iOS不支援192，會拉伸，用512最清晰！） -->
-  <link rel="apple-touch-icon" href="./allay_icon_512.png">
+  <script>
+if (location.search.includes("my")) {
+    document
+        .getElementById("manifest")
+        .setAttribute("href", "./manifest-my.json");
+}
+</script>
+
+  <!-- 3. iOS / Apple 專用桌面圖示：改讀取本機帶白底的圖片（iOS不支援192，會拉伸，用512最清晰！） -->
+  <link rel="apple-touch-icon" href="./allay_icon_192.png">
 
   <!-- 4. PWA 啟動與狀態欄設定 -->
   <meta name="apple-mobile-web-app-capable" content="yes">
@@ -23,7 +31,7 @@
     /* 1. 正常引入 Google Fonts */
     @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
 
-    /* 2. 妳原本的 PixelMplus12 載入設定（維持原樣即可） */
+    /* 2. 原本的 PixelMplus12 載入設定（維持原樣即可） */
     @font-face {
       font-family: 'PixelMplus';
       src: url('./PixelMplus12-Regular.woff') format('woff');
@@ -32,7 +40,7 @@
       font-display: swap;
     }
 
-    /* 3. 妳原本的 Cubic 11 載入設定（維持原樣即可） */
+    /* 3. 原本的 Cubic 11 載入設定（維持原樣即可） */
     @font-face {
       font-family: 'Cubic11';
       src: url('https://cdn.jsdelivr.net/gh/ACh-K/Cubic-11@main/fonts/web/Cubic_11.woff2') format('woff2');

@@ -1,0 +1,17 @@
+{
+  "name": "麥塊冒險",
+  "short_name": "麥塊冒險",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#2c2c2c",
+  "theme_color": "#2c2c2c",
+  "icons": [
+    {
+      "src": "./allay_white.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
